@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}Результаты поиска{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Форма поиска (боковая панель) -->
+        <div class="col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-filter"></i> Изменить поиск</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.departure_city.label(class="form-label") }}
+                            {{ form.departure_city(class="form-control") }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.arrival_city.label(class="form-label") }}
+                            {{ form.arrival_city(class="form-control") }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.departure_date.label(class="form-label") }}
+                            {{ form.departure_date(class="form-control") }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.passengers.label(class="form-label") }}
+                            {{ form.passengers(class="form-control") }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.seat_class.label(class="form-label") }}
+                            {{ form.seat_class(class="form-select") }}
+                        </div>
+                        
+                        {{ form.submit(class="btn btn-primary w-100", id="searchBtn") }}
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Информация о поиске -->
+            <div class="mt-4">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="fas fa-info-circle text-info"></i> Советы по поиску
+                        </h6>
+                        <ul class="list-unstyled small text-muted mb-0">
+                            <li><i class="fas fa-check text-success"></i> Можно искать по городам</li>
+                            <li><i class="fas fa-check text-success"></i> Можно выбрать дату</li>
+                            <li><i class="fas fa-check text-success"></i> Можно указать количество пассажиров</li>
+                            <li><i class="fas fa-check text-success"></i> Пустой поиск покажет все рейсы</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Результаты поиска -->
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-search"></i> Результаты поиска</h2>
+                {% if flights %}
+                    <span class="badge bg-primary fs-6">Найдено: {{ flights|length }} рейсов</span>
+                {% endif %}
+            </div>
+            
+            <!-- Индикатор загрузки -->
+            <div id="loadingIndicator" class="alert alert-info text-center" style="display: none;">
+                <div class="spinner-border spinner-border-sm me-2" role="status">
+                    <span class="visually-hidden">Поиск...</span>
+                </div>
+                Ищем рейсы...
+            </div>
+            
+            {% if flights %}
+                <div class="row" id="resultsContainer">
+                    {% for flight_data in flights %}
+                        {% if flight_data.Flight %}
+                            {% set flight = flight_data.Flight %}
+                        {% else %}
+                            {% set flight = flight_data %}
+                        {% endif %}
+                        <div class="col-12 mb-3">
+                            <div class="card flight-card shadow-sm">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <!-- Информация о рейсе -->
+                                        <div class="col-md-8">
+                                            <div class="row">
+                                                <div class="col-md-3 text-center">
+                                                    <div class="h4 mb-0">{{ flight.departure_time.strftime('%H:%M') }}</div>
+                                                    <small class="text-muted">{{ flight.departure_airport.code }}</small>
+                                                    <div class="fw-bold">
+                                                        {% if flight_data.dep_city %}
+                                                            {{ flight_data.dep_city }}
+                                                        {% else %}
+                                                            {{ flight.departure_airport.city }}
+                                                        {% endif %}
+                                                    </div>
+                                                    <small class="text-muted">{{ flight.departure_time.strftime('%d.%m.%Y') }}</small>
+                                                </div>
+                                                
+                                                <div class="col-md-6 text-center">
+                                                    <div class="flight-path">
+                                                        <small class="text-muted">{{ flight.duration }}</small>
+                                                        <div class="flight-line">
+                                                            <i class="fas fa-plane text-primary"></i>
+                                                        </div>
+                                                        <div class="text-muted small">{{ flight.flight_number }}</div>
+                                                        <div class="text-muted small">{{ flight.airline.name }}</div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-md-3 text-center">
+                                                    <div class="h4 mb-0">{{ flight.arrival_time.strftime('%H:%M') }}</div>
+                                                    <small class="text-muted">{{ flight.arrival_airport.code }}</small>
+                                                    <div class="fw-bold">
+                                                        {% if flight_data.arr_city %}
+                                                            {{ flight_data.arr_city }}
+                                                        {% else %}
+                                                            {{ flight.arrival_airport.city }}
+                                                        {% endif %}
+                                                    </div>
+                                                    <small class="text-muted">{{ flight.arrival_time.strftime('%d.%m.%Y') }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Цены и кнопка бронирования -->
+                                        <div class="col-md-4 text-end">
+                                            <div class="prices mb-3">
+                                                <div class="price-item">
+                                                    <span class="badge bg-success">Эконом</span>
+                                                    <div class="h5 text-success mb-0">{{ "%.0f"|format(flight.economy_price) }} ₽</div>
+                                                </div>
+                                                {% if flight.business_price %}
+                                                <div class="price-item mt-2">
+                                                    <span class="badge bg-warning">Бизнес</span>
+                                                    <div class="h6 text-warning mb-0">{{ "%.0f"|format(flight.business_price) }} ₽</div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <div class="mb-2">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-users"></i> Мест: {{ flight.available_seats }}
+                                                </small>
+                                            </div>
+                                            
+                                            {% if current_user.is_authenticated %}
+                                                <a href="{{ url_for('book_flight', flight_id=flight.id) }}" 
+                                                   class="btn btn-primary btn-lg">
+                                                    <i class="fas fa-ticket-alt"></i> Забронировать
+                                                </a>
+                                            {% else %}
+                                                <a href="{{ url_for('login') }}" 
+                                                   class="btn btn-outline-primary btn-lg">
+                                                    <i class="fas fa-sign-in-alt"></i> Войти для бронирования
+                                                </a>
+                                            {% endif %}
+                                            
+                                            <div class="mt-2">
+                                                <a href="{{ url_for('flight_details', flight_id=flight.id) }}" 
+                                                   class="btn btn-sm btn-outline-secondary">
+                                                    Подробнее
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5" id="noResultsContainer">
+                    <div class="card bg-light">
+                        <div class="card-body py-5">
+                            <i class="fas fa-search fa-3x text-muted mb-4"></i>
+                            <h4 class="text-muted">Рейсы не найдены</h4>
+                            <p class="text-muted">Попробуйте изменить параметры поиска или выбрать другие даты</p>
+                            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                                <i class="fas fa-home"></i> На главную
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block head %}
+<style>
+.flight-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.flight-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
+}
+
+.flight-line {
+    position: relative;
+    margin: 10px 0;
+}
+
+.flight-line:before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(to right, #007bff, #28a745);
+    z-index: 1;
+}
+
+.flight-line i {
+    position: relative;
+    z-index: 2;
+    background: white;
+    padding: 0 10px;
+}
+
+.price-item {
+    text-align: center;
+}
+
+
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const searchBtn = document.getElementById('searchBtn');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    
+    // Скрываем индикатор загрузки при загрузке страницы
+    if (loadingIndicator) {
+        loadingIndicator.style.display = 'none';
+    }
+    
+    
+    // Восстанавливаем кнопку поиска
+    if (searchBtn) {
+        searchBtn.innerHTML = '<i class="fas fa-search"></i> Найти рейсы';
+        searchBtn.disabled = false;
+    }
+    
+    form.addEventListener('submit', function() {
+        // Показываем индикатор загрузки
+        searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Поиск...';
+        searchBtn.disabled = true;
+        
+        // Показываем индикатор загрузки
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'block';
+        }
+    });
+});
+</script>
+{% endblock %}

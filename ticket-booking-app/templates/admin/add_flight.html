@@ -1,0 +1,259 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Добавить рейс - Админ панель{% endblock %}
+
+{% block admin_content %}
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-plus"></i> Добавить новый рейс</h2>
+                <a href="{{ url_for('admin_flights') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Назад к рейсам
+                </a>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <!-- Основная информация -->
+                            <div class="col-lg-6">
+                                <h5 class="mb-3"><i class="fas fa-info-circle"></i> Основная информация</h5>
+                                
+                                <div class="mb-3">
+                                    {{ form.flight_number.label(class="form-label") }}
+                                    {{ form.flight_number(class="form-control", placeholder="SU1234") }}
+                                    {% if form.flight_number.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.flight_number.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.airline_id.label(class="form-label") }}
+                                    {{ form.airline_id(class="form-select") }}
+                                    {% if form.airline_id.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.airline_id.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.aircraft_type.label(class="form-label") }}
+                                    {{ form.aircraft_type(class="form-control", placeholder="Boeing 737") }}
+                                    {% if form.aircraft_type.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.aircraft_type.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.status.label(class="form-label") }}
+                                    {{ form.status(class="form-select") }}
+                                    {% if form.status.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.status.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Маршрут и время -->
+                            <div class="col-lg-6">
+                                <h5 class="mb-3"><i class="fas fa-route"></i> Маршрут и время</h5>
+                                
+                                <div class="mb-3">
+                                    {{ form.departure_airport_id.label(class="form-label") }}
+                                    {{ form.departure_airport_id(class="form-select") }}
+                                    {% if form.departure_airport_id.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.departure_airport_id.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.arrival_airport_id.label(class="form-label") }}
+                                    {{ form.arrival_airport_id(class="form-select") }}
+                                    {% if form.arrival_airport_id.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.arrival_airport_id.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.departure_time.label(class="form-label") }}
+                                    {{ form.departure_time(class="form-control") }}
+                                    {% if form.departure_time.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.departure_time.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.arrival_time.label(class="form-label") }}
+                                    {{ form.arrival_time(class="form-control") }}
+                                    {% if form.arrival_time.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.arrival_time.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <!-- Места -->
+                            <div class="col-lg-6">
+                                <h5 class="mb-3"><i class="fas fa-chair"></i> Места</h5>
+                                
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="mb-3">
+                                            {{ form.total_seats.label(class="form-label") }}
+                                            {{ form.total_seats(class="form-control") }}
+                                            {% if form.total_seats.errors %}
+                                                <div class="text-danger small">
+                                                    {% for error in form.total_seats.errors %}{{ error }}{% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="mb-3">
+                                            {{ form.available_seats.label(class="form-label") }}
+                                            {{ form.available_seats(class="form-control") }}
+                                            {% if form.available_seats.errors %}
+                                                <div class="text-danger small">
+                                                    {% for error in form.available_seats.errors %}{{ error }}{% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Цены -->
+                            <div class="col-lg-6">
+                                <h5 class="mb-3"><i class="fas fa-tag"></i> Цены (₽)</h5>
+                                
+                                <div class="mb-3">
+                                    {{ form.economy_price.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.economy_price(class="form-control") }}
+                                        <span class="input-group-text">₽</span>
+                                    </div>
+                                    {% if form.economy_price.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.economy_price.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.business_price.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.business_price(class="form-control", placeholder="Оставьте пустым для авторасчета") }}
+                                        <span class="input-group-text">₽</span>
+                                    </div>
+                                    {% if form.business_price.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.business_price.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.first_class_price.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.first_class_price(class="form-control", placeholder="Оставьте пустым для авторасчета") }}
+                                        <span class="input-group-text">₽</span>
+                                    </div>
+                                    {% if form.first_class_price.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.first_class_price.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin_flights') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Отмена
+                            </a>
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Синхронизация общего количества мест с доступными
+    const totalSeats = document.querySelector('input[name="total_seats"]');
+    const availableSeats = document.querySelector('input[name="available_seats"]');
+    
+    if (totalSeats && availableSeats) {
+        totalSeats.addEventListener('input', function() {
+            if (!availableSeats.value || availableSeats.value > this.value) {
+                availableSeats.value = this.value;
+            }
+            availableSeats.max = this.value;
+        });
+    }
+    
+    // Автоматический расчет цен для бизнес и первого класса
+    const economyPrice = document.querySelector('input[name="economy_price"]');
+    const businessPrice = document.querySelector('input[name="business_price"]');
+    const firstPrice = document.querySelector('input[name="first_class_price"]');
+    
+    if (economyPrice && businessPrice && firstPrice) {
+        economyPrice.addEventListener('input', function() {
+            const basePrice = parseFloat(this.value) || 0;
+            if (basePrice > 0) {
+                if (!businessPrice.value) {
+                    businessPrice.placeholder = `${Math.round(basePrice * 2)} ₽ (авто)`;
+                }
+                if (!firstPrice.value) {
+                    firstPrice.placeholder = `${Math.round(basePrice * 3)} ₽ (авто)`;
+                }
+            }
+        });
+    }
+    
+    // Валидация времени прилета
+    const departureTime = document.querySelector('input[name="departure_time"]');
+    const arrivalTime = document.querySelector('input[name="arrival_time"]');
+    
+    if (departureTime && arrivalTime) {
+        function validateTimes() {
+            if (departureTime.value && arrivalTime.value) {
+                const depTime = new Date(departureTime.value);
+                const arrTime = new Date(arrivalTime.value);
+                
+                if (arrTime <= depTime) {
+                    arrivalTime.setCustomValidity('Время прилета должно быть позже времени вылета');
+                } else {
+                    arrivalTime.setCustomValidity('');
+                }
+            }
+        }
+        
+        departureTime.addEventListener('change', validateTimes);
+        arrivalTime.addEventListener('change', validateTimes);
+    }
+});
+</script>
+{% endblock %}

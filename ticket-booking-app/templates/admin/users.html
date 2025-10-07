@@ -1,0 +1,486 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Управление пользователями - Админ панель{% endblock %}
+
+{% block admin_content %}
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-users"></i> Управление пользователями</h2>
+                    <small class="text-muted">
+                        Показано: 
+                        {% if current_filter == 'admin' %}Администраторы
+                        {% elif current_filter == 'manager' %}Менеджеры  
+                        {% elif current_filter == 'user' %}Пассажиры
+                        {% else %}Все пользователи
+                        {% endif %}
+                        ({{ users|length }} из {{ total_users }})
+                    </small>
+                </div>
+                <div class="d-flex gap-2">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-filter"></i> Фильтр
+                            {% if current_filter != 'all' %}
+                                <span class="badge bg-primary ms-1">{{ current_filter }}</span>
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item {{ 'active' if current_filter == 'all' else '' }}" href="?role=all">
+                                    <i class="fas fa-users"></i> Все пользователи 
+                                    <span class="badge bg-secondary ms-2">{{ total_users }}</span>
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item {{ 'active' if current_filter == 'admin' else '' }}" href="?role=admin">
+                                    <i class="fas fa-user-shield text-danger"></i> Администраторы 
+                                    <span class="badge bg-danger ms-2">{{ admin_count }}</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item {{ 'active' if current_filter == 'manager' else '' }}" href="?role=manager">
+                                    <i class="fas fa-user-tie text-warning"></i> Менеджеры 
+                                    <span class="badge bg-warning ms-2">{{ manager_count }}</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item {{ 'active' if current_filter == 'user' else '' }}" href="?role=user">
+                                    <i class="fas fa-user text-primary"></i> Пассажиры 
+                                    <span class="badge bg-primary ms-2">{{ user_count }}</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <button class="btn btn-outline-info" onclick="refreshUserList()" title="Обновить список">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            
+            {% if users %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Всего пользователей: {{ users|length }}</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Пользователь</th>
+                                        <th>Email</th>
+                                        <th>Телефон</th>
+                                        <th>Роль</th>
+                                        <th>Статус</th>
+                                        <th>Бронирований</th>
+                                        <th>Регистрация</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                    <tr>
+                                        <td>{{ user.id }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-2">
+                                                    <i class="fas fa-user-circle fa-2x text-{{ 'danger' if user.role == 'admin' else 'warning' if user.role == 'manager' else 'primary' }}"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold">{{ user.first_name }} {{ user.last_name }}</div>
+                                                    <small class="text-muted">@{{ user.username }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ user.email }}</td>
+                                        <td>{{ user.phone or '-' }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ 'danger' if user.role == 'admin' else 'warning' if user.role == 'manager' else 'primary' }}">
+                                                {% if user.role == 'admin' %}Администратор
+                                                {% elif user.role == 'manager' %}Менеджер
+                                                {% else %}Пассажир
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if user.is_active %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check-circle"></i> Активен
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-ban"></i> Заблокирован
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ user.bookings|length }}</span>
+                                            {% if user.bookings|length > 0 %}
+                                                <br><small class="text-muted">
+                                                    Последнее: {{ user.bookings[-1].booking_date.strftime('%d.%m.%Y') if user.bookings else '-' }}
+                                                </small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{ user.created_at.strftime('%d.%m.%Y') }}
+                                            <br><small class="text-muted">{{ user.created_at.strftime('%H:%M') }}</small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" onclick="viewUser({{ user.id }})" title="Просмотр">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                {% if user.role != 'admin' %}
+                                                <button class="btn btn-outline-warning" onclick="changeUserRole({{ user.id }})" title="Изменить роль">
+                                                    <i class="fas fa-user-cog"></i>
+                                                </button>
+                                                {% if user.is_active %}
+                                                    <button class="btn btn-outline-danger" onclick="blockUser({{ user.id }}, '{{ user.username }}')" title="Заблокировать пользователя">
+                                                        <i class="fas fa-ban"></i>
+                                                    </button>
+                                                {% else %}
+                                                    <button class="btn btn-outline-success" onclick="blockUser({{ user.id }}, '{{ user.username }}')" title="Разблокировать пользователя">
+                                                        <i class="fas fa-check-circle"></i>
+                                                    </button>
+                                                {% endif %}
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="card bg-light">
+                        <div class="card-body py-5">
+                            <i class="fas fa-users fa-3x text-muted mb-4"></i>
+                            <h4 class="text-muted">Пользователи не найдены</h4>
+                            <p class="text-muted">Пользователи появятся после регистрации</p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для просмотра пользователя -->
+<div class="modal fade" id="userDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user"></i> Детальная информация о пользователе</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="userDetailsContent">
+                <!-- Содержимое загружается через JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Закрыть
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для изменения роли -->
+<div class="modal fade" id="changeRoleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Изменить роль пользователя</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="changeRoleForm">
+                    <input type="hidden" id="userId" name="user_id">
+                    <div class="mb-3">
+                        <label class="form-label">Новая роль</label>
+                        <select class="form-select" name="new_role" required>
+                            <option value="user">Пассажир</option>
+                            <option value="manager">Менеджер</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Причина изменения</label>
+                        <textarea class="form-control" name="reason" rows="3" placeholder="Укажите причину изменения роли..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-warning" onclick="submitRoleChange()">Изменить роль</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Обновление списка пользователей
+function refreshUserList() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentRole = urlParams.get('role') || 'all';
+    
+    // Показываем спиннер на кнопке
+    const refreshBtn = document.querySelector('[onclick="refreshUserList()"]');
+    const originalHtml = refreshBtn.innerHTML;
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    refreshBtn.disabled = true;
+    
+    // Перезагружаем страницу с текущим фильтром
+    setTimeout(() => {
+        window.location.href = `?role=${currentRole}`;
+    }, 500);
+}
+
+function viewUser(userId) {
+    // Показываем загрузку
+    const content = `
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+            </div>
+            <p class="mt-2">Загружаем информацию о пользователе...</p>
+        </div>
+    `;
+    
+    document.getElementById('userDetailsContent').innerHTML = content;
+    
+    // Показываем модальное окно
+    const modal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
+    modal.show();
+    
+    // AJAX запрос для получения деталей
+    fetch(`/api/user/${userId}/details`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки данных');
+            }
+            return response.json();
+        })
+        .then(data => {
+            renderUserDetails(data);
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки деталей пользователя:', error);
+            document.getElementById('userDetailsContent').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Ошибка загрузки данных</strong>
+                    <p class="mb-0">Не удалось загрузить информацию о пользователе. Попробуйте еще раз.</p>
+                    <button class="btn btn-sm btn-outline-danger mt-2" onclick="viewUser(${userId})">
+                        <i class="fas fa-redo"></i> Повторить
+                    </button>
+                </div>
+            `;
+        });
+}
+
+function renderUserDetails(data) {
+    const user = data.user;
+    const stats = data.statistics;
+    const bookings = data.recent_bookings;
+    
+    const roleBadgeClass = {
+        'admin': 'bg-danger',
+        'manager': 'bg-warning',
+        'user': 'bg-primary'
+    };
+    
+    const roleText = {
+        'admin': 'Администратор',
+        'manager': 'Менеджер',
+        'user': 'Пассажир'
+    };
+    
+    const content = `
+        <div class="row">
+            <div class="col-md-4">
+                <!-- Профиль пользователя -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-user"></i> Профиль</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <i class="fas fa-user-circle fa-4x text-${user.role === 'admin' ? 'danger' : user.role === 'manager' ? 'warning' : 'primary'} mb-3"></i>
+                        <h5>${user.first_name} ${user.last_name}</h5>
+                        <p class="text-muted">@${user.username}</p>
+                        <span class="badge ${roleBadgeClass[user.role]} fs-6">${roleText[user.role]}</span>
+                    </div>
+                </div>
+                
+                <!-- Контактная информация -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-address-card"></i> Контакты</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td><i class="fas fa-envelope text-muted"></i></td>
+                                <td>${user.email}</td>
+                            </tr>
+                            <tr>
+                                <td><i class="fas fa-phone text-muted"></i></td>
+                                <td>${user.phone || 'Не указан'}</td>
+                            </tr>
+                            <tr>
+                                <td><i class="fas fa-calendar text-muted"></i></td>
+                                <td>Регистрация: ${user.created_at}</td>
+                            </tr>
+                            <tr>
+                                <td><i class="fas fa-id-badge text-muted"></i></td>
+                                <td>ID: ${user.id}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-8">
+                <!-- Статистика бронирований -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-chart-bar"></i> Статистика бронирований</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div class="border rounded p-3">
+                                    <h4 class="text-primary">${stats.total_bookings}</h4>
+                                    <small class="text-muted">Всего бронирований</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded p-3">
+                                    <h4 class="text-success">${stats.total_spent.toLocaleString()} ₽</h4>
+                                    <small class="text-muted">Потрачено всего</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded p-3">
+                                    <h4 class="text-warning">${stats.average_booking_value.toLocaleString()} ₽</h4>
+                                    <small class="text-muted">Средний чек</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${stats.favorite_destinations.length > 0 ? `
+                        <hr>
+                        <h6><i class="fas fa-heart"></i> Любимые направления:</h6>
+                        <ul class="list-unstyled">
+                            ${stats.favorite_destinations.map(([route, count]) => `
+                                <li><span class="badge bg-info">${count}</span> ${route}</li>
+                            `).join('')}
+                        </ul>
+                        ` : ''}
+                    </div>
+                </div>
+                
+                ${bookings.length > 0 ? `
+                <!-- Последние бронирования -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-ticket-alt"></i> Последние бронирования</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Код</th>
+                                        <th>Рейс</th>
+                                        <th>Маршрут</th>
+                                        <th>Дата вылета</th>
+                                        <th>Класс</th>
+                                        <th>Цена</th>
+                                        <th>Статус</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${bookings.map(booking => `
+                                        <tr>
+                                            <td><code>${booking.booking_reference}</code></td>
+                                            <td><strong>${booking.flight_number}</strong></td>
+                                            <td>${booking.route}</td>
+                                            <td>${booking.departure_time}</td>
+                                            <td><span class="badge bg-info">${booking.seat_class}</span></td>
+                                            <td><strong>${booking.price_paid.toLocaleString()} ₽</strong></td>
+                                            <td><span class="badge bg-success">${booking.status}</span></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                ` : '<div class="alert alert-info"><i class="fas fa-info-circle"></i> У пользователя пока нет бронирований</div>'}
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('userDetailsContent').innerHTML = content;
+}
+
+function changeUserRole(userId) {
+    document.getElementById('userId').value = userId;
+    const modal = new bootstrap.Modal(document.getElementById('changeRoleModal'));
+    modal.show();
+}
+
+function submitRoleChange() {
+    const form = document.getElementById('changeRoleForm');
+    const formData = new FormData(form);
+    const userId = formData.get('user_id');
+    
+    // Создаем форму для POST запроса
+    const submitForm = document.createElement('form');
+    submitForm.method = 'POST';
+    submitForm.action = `/admin/user/${userId}/change-role`;
+    submitForm.style.display = 'none';
+    
+    // Добавляем поля формы
+    const fields = ['new_role', 'reason'];
+    fields.forEach(fieldName => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = fieldName;
+        input.value = formData.get(fieldName);
+        submitForm.appendChild(input);
+    });
+    
+    document.body.appendChild(submitForm);
+    submitForm.submit();
+}
+
+function blockUser(userId, username) {
+    // Определяем текущий статус пользователя из DOM
+    const userRow = document.querySelector(`tr:has(button[onclick*="${userId}"])`);
+    const statusBadge = userRow ? userRow.querySelector('td:nth-child(6) .badge') : null;
+    const isActive = statusBadge ? statusBadge.classList.contains('bg-success') : true;
+    
+    const action = isActive ? 'заблокировать' : 'разблокировать';
+    const actionCapital = isActive ? 'Заблокировать' : 'Разблокировать';
+    
+    if (confirm(`${actionCapital} пользователя ${username}?`)) {
+        // Создаем форму для POST запроса
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/user/${userId}/toggle-status`;
+        form.style.display = 'none';
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,413 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Управление рейсами - Админ панель{% endblock %}
+
+{% block admin_content %}
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-plane"></i> Управление рейсами</h2>
+            </div>
+            
+            {% if flights %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Всего рейсов: {{ flights|length }}</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Рейс</th>
+                                        <th>Маршрут</th>
+                                        <th>Авиакомпания</th>
+                                        <th>Дата/Время</th>
+                                        <th>Самолет</th>
+                                        <th>Места</th>
+                                        <th>Цена (эконом)</th>
+                                        <th>Статус</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for flight in flights %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ flight.flight_number }}</strong>
+                                        </td>
+                                        <td>
+                                            <div>{{ flight.departure_airport.city }} → {{ flight.arrival_airport.city }}</div>
+                                            <small class="text-muted">{{ flight.departure_airport.code }} - {{ flight.arrival_airport.code }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ flight.airline.code }}</span>
+                                            <div class="small">{{ flight.airline.name }}</div>
+                                        </td>
+                                        <td>
+                                            <div>{{ flight.departure_time.strftime('%d.%m.%Y') }}</div>
+                                            <small class="text-muted">{{ flight.departure_time.strftime('%H:%M') }} - {{ flight.arrival_time.strftime('%H:%M') }}</small>
+                                        </td>
+                                        <td>{{ flight.aircraft_type or '-' }}</td>
+                                        <td>
+                                            <div>{{ flight.available_seats }}/{{ flight.total_seats }}</div>
+                                            {% set occupancy = ((flight.total_seats - flight.available_seats) / flight.total_seats * 100) if flight.total_seats > 0 else 0 %}
+                                            <div class="progress" style="height: 4px;">
+                                                <div class="progress-bar 
+                                                    {% if occupancy < 50 %}bg-success
+                                                    {% elif occupancy < 80 %}bg-warning
+                                                    {% else %}bg-danger{% endif %}" 
+                                                    style="width: {{ occupancy }}%"></div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <strong class="text-success">{{ "%.0f"|format(flight.economy_price) }} ₽</strong>
+                                            {% if flight.business_price %}
+                                                <br><small class="text-muted">Бизнес: {{ "%.0f"|format(flight.business_price) }} ₽</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if flight.status == 'scheduled' %}primary{% elif flight.status == 'delayed' %}warning{% elif flight.status == 'cancelled' %}danger{% elif flight.status == 'boarding' %}info{% elif flight.status == 'departed' %}success{% endif %}">
+                                                {% if flight.status == 'scheduled' %}Запланирован
+                                                {% elif flight.status == 'delayed' %}Задержан
+                                                {% elif flight.status == 'cancelled' %}Отменен
+                                                {% elif flight.status == 'boarding' %}Посадка
+                                                {% elif flight.status == 'departed' %}Вылетел
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ url_for('admin_edit_flight', flight_id=flight.id) }}" 
+                                                   class="btn btn-outline-primary" title="Редактировать">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button class="btn btn-outline-success" 
+                                                        onclick="toggleFlightStatus({{ flight.id }}, '{{ flight.flight_number }}')" 
+                                                        title="Изменить статус">
+                                                    <i class="fas fa-exchange-alt"></i>
+                                                </button>
+                                                <button class="btn btn-outline-info" 
+                                                        onclick="viewFlightDetails({{ flight.id }})" 
+                                                        title="Подробная информация о рейсе">
+                                                    <i class="fas fa-info-circle"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger" 
+                                                        onclick="deleteFlight({{ flight.id }}, '{{ flight.flight_number }}')" 
+                                                        title="Удалить">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="card bg-light">
+                        <div class="card-body py-5">
+                            <i class="fas fa-plane fa-3x text-muted mb-4"></i>
+                            <h4 class="text-muted">Рейсы не найдены</h4>
+                            <p class="text-muted">Рейсы управляются через панель менеджеров авиакомпаний</p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для деталей рейса -->
+<div class="modal fade" id="flightDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-info-circle"></i> Детальная информация о рейсе</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="flightDetailsContent">
+                <!-- Содержимое загружается через JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Закрыть
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleFlightStatus(flightId, flightNumber) {
+    if (confirm(`Изменить статус рейса ${flightNumber}?`)) {
+        // Создаем форму для POST запроса
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/flight/toggle-status/${flightId}`;
+        form.style.display = 'none';
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function viewFlightDetails(flightId) {
+    // Показываем загрузку
+    const content = `
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+            </div>
+            <p class="mt-2">Загружаем детали рейса...</p>
+        </div>
+    `;
+    
+    document.getElementById('flightDetailsContent').innerHTML = content;
+    
+    // Показываем модальное окно
+    const modal = new bootstrap.Modal(document.getElementById('flightDetailsModal'));
+    modal.show();
+    
+    // AJAX запрос для получения деталей
+    fetch(`/api/flight/${flightId}/details`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки данных');
+            }
+            return response.json();
+        })
+        .then(data => {
+            renderFlightDetails(data);
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки деталей рейса:', error);
+            document.getElementById('flightDetailsContent').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Ошибка загрузки данных</strong>
+                    <p class="mb-0">Не удалось загрузить детали рейса. Попробуйте еще раз.</p>
+                    <button class="btn btn-sm btn-outline-danger mt-2" onclick="viewFlightDetails(${flightId})">
+                        <i class="fas fa-redo"></i> Повторить
+                    </button>
+                </div>
+            `;
+        });
+}
+
+function renderFlightDetails(data) {
+    const flight = data.flight;
+    const stats = data.statistics;
+    const bookings = data.recent_bookings;
+    
+    const statusBadgeClass = {
+        'scheduled': 'bg-primary',
+        'boarding': 'bg-info', 
+        'departed': 'bg-success',
+        'arrived': 'bg-success',
+        'completed': 'bg-secondary',
+        'cancelled': 'bg-danger',
+        'delayed': 'bg-warning'
+    };
+    
+    const statusText = {
+        'scheduled': 'Запланирован',
+        'boarding': 'Посадка',
+        'departed': 'Вылетел', 
+        'arrived': 'Прилетел',
+        'completed': 'Завершен',
+        'cancelled': 'Отменен',
+        'delayed': 'Задержан'
+    };
+    
+    const content = `
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Основная информация -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-plane"></i> 
+                            ${flight.flight_number} - ${flight.departure_airport.city} → ${flight.arrival_airport.city}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-plane-departure"></i> Вылет</h6>
+                                <p class="mb-1"><strong>${flight.departure_airport.name}</strong></p>
+                                <p class="mb-1">${flight.departure_airport.city} (${flight.departure_airport.code})</p>
+                                <p class="text-primary"><strong>${flight.departure_time}</strong></p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-plane-arrival"></i> Прилет</h6>
+                                <p class="mb-1"><strong>${flight.arrival_airport.name}</strong></p>
+                                <p class="mb-1">${flight.arrival_airport.city} (${flight.arrival_airport.code})</p>
+                                <p class="text-primary"><strong>${flight.arrival_time}</strong></p>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <h6><i class="fas fa-building"></i> Авиакомпания</h6>
+                                <p><span class="badge bg-secondary">${flight.airline.code}</span> ${flight.airline.name}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h6><i class="fas fa-clock"></i> Время в пути</h6>
+                                <p>${flight.duration}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h6><i class="fas fa-plane"></i> Самолет</h6>
+                                <p>${flight.aircraft_type || 'Не указан'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Цены -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-tag"></i> Цены на билеты</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="text-center p-2 border rounded">
+                                    <h6>Эконом</h6>
+                                    <p class="h5 text-success">${flight.economy_price.toLocaleString()} ₽</p>
+                                </div>
+                            </div>
+                            ${flight.business_price ? `
+                            <div class="col-md-4">
+                                <div class="text-center p-2 border rounded">
+                                    <h6>Бизнес</h6>
+                                    <p class="h5 text-warning">${flight.business_price.toLocaleString()} ₽</p>
+                                </div>
+                            </div>
+                            ` : ''}
+                            ${flight.first_class_price ? `
+                            <div class="col-md-4">
+                                <div class="text-center p-2 border rounded">
+                                    <h6>Первый класс</h6>
+                                    <p class="h5 text-danger">${flight.first_class_price.toLocaleString()} ₽</p>
+                                </div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <!-- Статус и заполненность -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-info-circle"></i> Статус рейса</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <span class="badge ${statusBadgeClass[flight.status] || 'bg-secondary'} fs-6 mb-3">
+                            ${statusText[flight.status] || flight.status}
+                        </span>
+                        
+                        <h6>Заполненность</h6>
+                        <div class="progress mb-2" style="height: 20px;">
+                            <div class="progress-bar ${flight.occupancy_percent > 80 ? 'bg-danger' : flight.occupancy_percent > 50 ? 'bg-warning' : 'bg-success'}" 
+                                 style="width: ${flight.occupancy_percent}%">
+                                ${flight.occupancy_percent}%
+                            </div>
+                        </div>
+                        <p class="mb-0">${flight.booked_seats} из ${flight.total_seats} мест</p>
+                    </div>
+                </div>
+                
+                <!-- Статистика -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-chart-bar"></i> Статистика</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <tr>
+                                <td>Бронирований:</td>
+                                <td><strong>${stats.total_bookings}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Выручка:</td>
+                                <td><strong class="text-success">${stats.total_revenue.toLocaleString()} ₽</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Средняя цена:</td>
+                                <td><strong>${stats.average_ticket_price.toLocaleString()} ₽</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        ${bookings.length > 0 ? `
+        <!-- Последние бронирования -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-ticket-alt"></i> Последние бронирования</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Код</th>
+                                <th>Пассажир</th>
+                                <th>Класс</th>
+                                <th>Цена</th>
+                                <th>Дата</th>
+                                <th>Статус</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${bookings.map(booking => `
+                                <tr>
+                                    <td><code>${booking.booking_reference}</code></td>
+                                    <td>${booking.passenger_name}</td>
+                                    <td><span class="badge bg-info">${booking.seat_class}</span></td>
+                                    <td>${booking.price_paid.toLocaleString()} ₽</td>
+                                    <td>${booking.booking_date}</td>
+                                    <td><span class="badge bg-success">${booking.status}</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        ` : '<div class="alert alert-info"><i class="fas fa-info-circle"></i> На этот рейс пока нет бронирований</div>'}
+    `;
+    
+    document.getElementById('flightDetailsContent').innerHTML = content;
+}
+
+function deleteFlight(flightId, flightNumber) {
+    if (confirm(`Вы уверены, что хотите удалить рейс ${flightNumber}?\n\nВнимание: Если на рейс есть бронирования, удаление будет невозможно.`)) {
+        // Создаем форму для POST запроса
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/flight/delete/${flightId}`;
+        form.style.display = 'none';
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Автообновление статусов (каждые 30 секунд)
+setInterval(function() {
+    // В реальном приложении здесь был бы AJAX запрос для обновления статусов
+    console.log('Проверка обновлений статусов рейсов...');
+}, 30000);
+</script>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Боковое меню -->
+        <div class="col-md-3 col-lg-2">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0"><i class="fas fa-briefcase"></i> Панель менеджера</h6>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('manager_dashboard') }}" class="list-group-item list-group-item-action {{ 'active' if request.endpoint == 'manager_dashboard' }}">
+                        <i class="fas fa-tachometer-alt"></i> Обзор
+                    </a>
+                    <a href="{{ url_for('manager_flights') }}" class="list-group-item list-group-item-action {{ 'active' if request.endpoint == 'manager_flights' }}">
+                        <i class="fas fa-plane"></i> Мои рейсы
+                    </a>
+                    <a href="{{ url_for('manager_passengers') }}" class="list-group-item list-group-item-action {{ 'active' if request.endpoint == 'manager_passengers' }}">
+                        <i class="fas fa-users"></i> Пассажиры
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Основной контент -->
+        <div class="col-md-9 col-lg-10">
+            {% block manager_content %}
+            {% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

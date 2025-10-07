@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - Поиск авиабилетов{% endblock %}
+
+{% block content %}
+<!-- Кнопка выхода (для тестирования) -->
+{% if current_user.is_authenticated %}
+<div class="container-fluid py-2 bg-info">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <small class="text-white">
+                    Вы вошли как: <strong>{{ current_user.first_name }} {{ current_user.last_name }}</strong> 
+                    ({{ current_user.role }})
+                    <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-light ms-2">
+                        <i class="fas fa-sign-out-alt"></i> Выйти
+                    </a>
+                    <a href="{{ url_for('clear_session') }}" class="btn btn-sm btn-outline-warning ms-1">
+                        <i class="fas fa-trash"></i> Очистить сессию
+                    </a>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Кнопка инициализации данных (если нет данных) -->
+{% if not banner and not recent_flights %}
+<div class="container-fluid py-3 bg-warning">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h5 class="mb-3">Добро пожаловать в систему бронирования авиабилетов!</h5>
+                <p class="mb-3">Для начала работы необходимо инициализировать тестовые данные.</p>
+                <a href="/init-data" class="btn btn-primary btn-lg">
+                    <i class="fas fa-database"></i> Инициализировать данные
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Рекламный баннер -->
+{% if banner %}
+<div class="container-fluid py-3 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-3">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h5 class="card-title mb-2 text-primary">{{ banner.title }}</h5>
+                                {% if banner.description %}
+                                    <p class="card-text text-muted mb-2">{{ banner.description }}</p>
+                                {% endif %}
+                                {% if banner.link_url %}
+                                    <a href="{{ banner.link_url }}" target="_blank" class="btn btn-sm btn-outline-primary" onclick="trackBannerClick('{{ banner.id }}')">
+                                        <i class="fas fa-external-link-alt"></i> Подробнее
+                                    </a>
+                                {% endif %}
+                            </div>
+                            {% if banner.image_url %}
+                            <div class="col-md-4 text-center">
+                                <img src="{{ banner.image_url }}" alt="{{ banner.title }}" class="img-fluid rounded" style="max-height: 100px;">
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Главный баннер -->
+<section class="hero-section bg-gradient-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Найдите лучшие авиабилеты</h1>
+                <p class="lead mb-4">Быстро, удобно и выгодно. Сравнивайте цены и бронируйте билеты онлайн.</p>
+            </div>
+            <div class="col-lg-6">
+                <div class="card shadow-lg">
+                    <div class="card-body p-4">
+                        <h4 class="card-title text-dark mb-4">
+                            <i class="fas fa-search text-primary"></i> Поиск рейсов
+                        </h4>
+                        
+                        <form method="POST" action="{{ url_for('search_flights') }}">
+                            {{ form.hidden_tag() }}
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    {{ form.departure_city.label(class="form-label text-dark") }}
+                                    {{ form.departure_city(class="form-control", placeholder="Откуда", id="departure-city") }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.arrival_city.label(class="form-label text-dark") }}
+                                    {{ form.arrival_city(class="form-control", placeholder="Куда", id="arrival-city") }}
+                                </div>
+                                <div class="col-md-8">
+                                    {{ form.departure_date.label(class="form-label text-dark") }}
+                                    {{ form.departure_date(class="form-control") }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.passengers.label(class="form-label text-dark") }}
+                                    {{ form.passengers(class="form-control", min="1", max="9") }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.seat_class.label(class="form-label text-dark") }}
+                                    {{ form.seat_class(class="form-select") }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.return_date.label(class="form-label text-dark") }}
+                                    {{ form.return_date(class="form-control") }}
+                                </div>
+                                <div class="col-12">
+                                    {{ form.submit(class="btn btn-primary btn-lg w-100") }}
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- Популярные направления -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">
+            <i class="fas fa-star text-warning"></i> Популярные направления
+        </h2>
+        
+        {% if recent_flights %}
+        <div class="row">
+            {% for flight in recent_flights %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm hover-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title mb-0">
+                                {{ flight.departure_airport.city }} → {{ flight.arrival_airport.city }}
+                            </h5>
+                            <span class="badge bg-primary">{{ flight.airline.code }}</span>
+                        </div>
+                        
+                        <div class="row text-center mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">Вылет</small>
+                                <div class="fw-bold">{{ flight.departure_time.strftime('%H:%M') }}</div>
+                                <small>{{ flight.departure_time.strftime('%d.%m') }}</small>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Прилет</small>
+                                <div class="fw-bold">{{ flight.arrival_time.strftime('%H:%M') }}</div>
+                                <small>{{ flight.arrival_time.strftime('%d.%m') }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="h5 text-success mb-0">от {{ "%.0f"|format(flight.economy_price) }} ₽</span>
+                                <br><small class="text-muted">за пассажира</small>
+                            </div>
+                            <a href="{{ url_for('flight_details', flight_id=flight.id) }}" class="btn btn-outline-primary">
+                                Подробнее
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center">
+            <div class="card bg-light">
+                <div class="card-body py-5">
+                    <i class="fas fa-plane fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">Рейсы скоро появятся</h4>
+                    <p class="text-muted">Мы работаем над добавлением новых направлений</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Преимущества -->
+<section class="bg-light py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Почему выбирают нас?</h2>
+        
+        <div class="row">
+            <div class="col-md-4 text-center mb-4">
+                <div class="feature-icon mb-3">
+                    <i class="fas fa-clock fa-3x text-primary"></i>
+                </div>
+                <h4>Быстрое бронирование</h4>
+                <p class="text-muted">Забронируйте билет всего за несколько кликов</p>
+            </div>
+            
+            <div class="col-md-4 text-center mb-4">
+                <div class="feature-icon mb-3">
+                    <i class="fas fa-shield-alt fa-3x text-success"></i>
+                </div>
+                <h4>Безопасные платежи</h4>
+                <p class="text-muted">Ваши данные защищены современным шифрованием</p>
+            </div>
+            
+            <div class="col-md-4 text-center mb-4">
+                <div class="feature-icon mb-3">
+                    <i class="fas fa-headset fa-3x text-info"></i>
+                </div>
+                <h4>Поддержка 24/7</h4>
+                <p class="text-muted">Мы всегда готовы помочь вам в любое время</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block styles %}
+<style>
+.banner-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.banner-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e0e0e0;
+}
+
+.banner-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+    border-color: #007bff;
+}
+
+.banner-container::after {
+    content: "Реклама";
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    z-index: 10;
+}
+
+.hover-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.feature-icon {
+    padding: 1rem;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Автодополнение для городов
+    setupAutocomplete('#departure-city');
+    setupAutocomplete('#arrival-city');
+    
+    // Установка минимальной даты (сегодня)
+    const departureDate = document.querySelector('[name="departure_date"]');
+    const returnDate = document.querySelector('[name="return_date"]');
+    
+    if (departureDate) {
+        const now = new Date();
+        const formatted = now.toISOString().slice(0, 16);
+        departureDate.min = formatted;
+        
+        // При изменении даты вылета, обновляем минимальную дату возврата
+        departureDate.addEventListener('change', function() {
+            if (returnDate) {
+                returnDate.min = this.value;
+            }
+        });
+    }
+});
+
+function setupAutocomplete(selector) {
+    const input = document.querySelector(selector);
+    if (!input) return;
+    
+    let timeout;
+    
+    input.addEventListener('input', function() {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            const query = this.value;
+            if (query.length < 2) return;
+            
+            fetch(`/api/cities?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(cities => {
+                    // Здесь можно добавить логику для отображения автодополнения
+                    console.log('Cities:', cities);
+                });
+        }, 300);
+    });
+    }
+    
+    // Отслеживание кликов по баннеру
+    function trackBannerClick(bannerId) {
+        fetch(`/api/banner/${bannerId}/click`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).catch(error => {
+            console.log('Ошибка отслеживания клика:', error);
+        });
+    }
+    
+    // Функция очистки сессии
+    function clearSession() {
+        // Очищаем все cookies
+        document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+        });
+        
+        // Очищаем localStorage
+        localStorage.clear();
+        
+        // Очищаем sessionStorage
+        sessionStorage.clear();
+        
+        // Перезагружаем страницу
+        window.location.reload();
+    }
+</script>
+{% endblock %}

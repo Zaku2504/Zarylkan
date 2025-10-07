@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Боковое меню -->
+        <div class="col-md-3 col-lg-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-cog"></i> Админ панель</h6>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('admin_dashboard') }}" class="list-group-item list-group-item-action {{ 'active' if request.endpoint == 'admin_dashboard' }}">
+                        <i class="fas fa-chart-line"></i> Статистика сервиса
+                    </a>
+                    <a href="{{ url_for('admin_banners') }}" class="list-group-item list-group-item-action {{ 'active' if request.endpoint == 'admin_banners' }}">
+                        <i class="fas fa-ad"></i> Рекламные баннеры
+                    </a>
+                    <a href="{{ url_for('admin_airlines') }}" class="list-group-item list-group-item-action {{ 'active' if request.endpoint == 'admin_airlines' }}">
+                        <i class="fas fa-building"></i> Авиакомпании
+                    </a>
+                    <a href="{{ url_for('admin_users') }}" class="list-group-item list-group-item-action {{ 'active' if request.endpoint == 'admin_users' }}">
+                        <i class="fas fa-users"></i> Пользователи
+                    </a>
+                    <a href="{{ url_for('admin_manager_assignments') }}" class="list-group-item list-group-item-action {{ 'active' if request.endpoint == 'admin_manager_assignments' }}">
+                        <i class="fas fa-user-tie"></i> Назначения менеджеров
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Основной контент -->
+        <div class="col-md-9 col-lg-10">
+            {% block admin_content %}
+            {% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

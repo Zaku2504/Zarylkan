@@ -1,0 +1,533 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Управление авиакомпаниями{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-plane"></i> Управление авиакомпаниями</h2>
+                    <small class="text-muted">Создание и управление авиакомпаниями в системе</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-info" onclick="refreshPage()" title="Обновить">
+                        <i class="fas fa-sync-alt"></i> Обновить
+                    </button>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createAirlineModal">
+                        <i class="fas fa-plus"></i> Создать авиакомпанию
+                    </button>
+                </div>
+            </div>
+
+            <!-- Статистика -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4>{{ airlines|length }}</h4>
+                                    <span>Всего авиакомпаний</span>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-plane fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4>{{ airlines_with_managers }}</h4>
+                                    <span>С менеджерами</span>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-user-check fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4>{{ airlines_without_managers }}</h4>
+                                    <span>Без менеджеров</span>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-user-times fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4>{{ total_flights }}</h4>
+                                    <span>Всего рейсов</span>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-route fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Таблица авиакомпаний -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-table"></i> Список авиакомпаний</h5>
+                </div>
+                <div class="card-body">
+                    {% if airlines %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Название</th>
+                                        <th>IATA код</th>
+                                        <th>Страна</th>
+                                        <th>Менеджер</th>
+                                        <th>Рейсы</th>
+                                        <th>Дата создания</th>
+                                        <th class="text-center">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for airline in airlines %}
+                                        <tr>
+                                            <td>{{ airline.id }}</td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-plane text-primary me-2"></i>
+                                                    <strong>{{ airline.name }}</strong>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-dark">{{ airline.code }}</span>
+                                            </td>
+                                            <td>
+                                                <i class="fas fa-flag"></i> {{ airline.country }}
+                                            </td>
+                                            <td>
+                                                {% set manager = airline_managers[airline.id] %}
+                                                {% if manager %}
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="fas fa-user-tie text-success me-2"></i>
+                                                        <div>
+                                                            <strong>{{ manager.first_name }} {{ manager.last_name }}</strong>
+                                                            <br>
+                                                            <small class="text-muted">@{{ manager.username }}</small>
+                                                        </div>
+                                                    </div>
+                                                {% else %}
+                                                    <span class="badge bg-warning">
+                                                        <i class="fas fa-user-times"></i> Нет менеджера
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if airline.flights %}
+                                                    <span class="badge bg-info">{{ airline.flights|length }} рейсов</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Нет рейсов</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if airline.created_at %}
+                                                    {{ airline.created_at.strftime('%d.%m.%Y') }}
+                                                {% else %}
+                                                    <span class="text-muted">Неизвестно</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="btn-group" role="group">
+                                                    {% if not airline_managers[airline.id] %}
+                                                        <button class="btn btn-sm btn-outline-success" 
+                                                                onclick="assignManagerToAirline({{ airline.id }}, '{{ airline.name }}')" 
+                                                                title="Назначить менеджера">
+                                                            <i class="fas fa-user-plus"></i>
+                                                        </button>
+                                                    {% endif %}
+                                                    <button class="btn btn-sm btn-outline-primary" 
+                                                            onclick="editAirline({{ airline.id }}, '{{ airline.name }}', '{{ airline.code }}', '{{ airline.country }}')" 
+                                                            title="Редактировать">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    {% if not airline.flights %}
+                                                        <button class="btn btn-sm btn-outline-danger" 
+                                                                onclick="deleteAirline({{ airline.id }}, '{{ airline.name }}')" 
+                                                                title="Удалить">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-plane fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">Авиакомпании не найдены</h4>
+                            <p class="text-muted">Создайте первую авиакомпанию</p>
+                            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createAirlineModal">
+                                <i class="fas fa-plus"></i> Создать авиакомпанию
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для создания авиакомпании -->
+<div class="modal fade" id="createAirlineModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plane"></i> Создать новую авиакомпанию
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('create_airline') }}">
+                <div class="modal-body">
+                    <!-- Основные данные авиакомпании -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-plane"></i> Данные авиакомпании</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8 mb-3">
+                                    <label for="airline_name" class="form-label">Название авиакомпании</label>
+                                    <input type="text" class="form-control" id="airline_name" name="airline_name" required>
+                                    <div class="form-text">Полное официальное название</div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="airline_code" class="form-label">IATA код</label>
+                                    <input type="text" class="form-control text-uppercase" id="airline_code" name="airline_code" 
+                                           maxlength="3" style="text-transform: uppercase;" required>
+                                    <div class="form-text">3 символа (например: AFL)</div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="country" class="form-label">Страна</label>
+                                <input type="text" class="form-control" id="country" name="country" required>
+                                <div class="form-text">Страна базирования авиакомпании</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Опция создания менеджера -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="create_manager" name="create_manager" 
+                                       onchange="toggleManagerFields()">
+                                <label class="form-check-label" for="create_manager">
+                                    <i class="fas fa-user-plus"></i> Одновременно создать менеджера для этой авиакомпании
+                                </label>
+                            </div>
+                        </div>
+                        <div class="card-body" id="managerFields" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="manager_first_name" class="form-label">Имя менеджера</label>
+                                    <input type="text" class="form-control" id="manager_first_name" name="manager_first_name">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="manager_last_name" class="form-label">Фамилия менеджера</label>
+                                    <input type="text" class="form-control" id="manager_last_name" name="manager_last_name">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="manager_username" class="form-label">Логин менеджера</label>
+                                    <input type="text" class="form-control" id="manager_username" name="manager_username">
+                                    <div class="form-text">Уникальный логин для входа</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="manager_password" class="form-label">Пароль</label>
+                                    <input type="password" class="form-control" id="manager_password" name="manager_password">
+                                    <div class="form-text">Минимум 6 символов</div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-8 mb-3">
+                                    <label for="manager_email" class="form-label">Email менеджера</label>
+                                    <input type="email" class="form-control" id="manager_email" name="manager_email">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="manager_phone" class="form-label">Телефон</label>
+                                    <input type="tel" class="form-control" id="manager_phone" name="manager_phone">
+                                </div>
+                            </div>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <small>Менеджер будет автоматически назначен к создаваемой авиакомпании</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Отмена
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Создать авиакомпанию
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно назначения менеджера -->
+<div class="modal fade" id="assignManagerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus"></i> Назначить менеджера к авиакомпании
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('assign_manager') }}">
+                <div class="modal-body">
+                    <input type="hidden" id="assign_company_id" name="company_id">
+                    <div class="mb-3">
+                        <label class="form-label">Авиакомпания</label>
+                        <div class="form-control-plaintext" id="airline_name_display"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="assign_manager_id" class="form-label">Менеджер</label>
+                        <select class="form-select" id="assign_manager_id" name="manager_id" required>
+                            <option value="">Выберите менеджера...</option>
+                            {% for manager in unassigned_managers %}
+                                <option value="{{ manager.id }}">
+                                    {{ manager.first_name }} {{ manager.last_name }} ({{ manager.username }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                        {% if not unassigned_managers %}
+                            <div class="form-text text-warning">
+                                <i class="fas fa-exclamation-triangle"></i> Нет свободных менеджеров
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Отмена
+                    </button>
+                    <button type="submit" class="btn btn-success" {% if not unassigned_managers %}disabled{% endif %}>
+                        <i class="fas fa-save"></i> Назначить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Обновление страницы
+function refreshPage() {
+    const refreshBtn = document.querySelector('[onclick="refreshPage()"]');
+    const originalHtml = refreshBtn.innerHTML;
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Обновление...';
+    refreshBtn.disabled = true;
+    
+    setTimeout(() => {
+        location.reload();
+    }, 500);
+}
+
+// Переключение отображения полей менеджера
+function toggleManagerFields() {
+    const checkbox = document.getElementById('create_manager');
+    const fields = document.getElementById('managerFields');
+    const inputs = fields.querySelectorAll('input');
+    
+    if (checkbox.checked) {
+        fields.style.display = 'block';
+        // Делаем поля обязательными
+        inputs.forEach(input => {
+            if (['manager_first_name', 'manager_last_name', 'manager_username', 'manager_email', 'manager_password'].includes(input.name)) {
+                input.required = true;
+            }
+        });
+    } else {
+        fields.style.display = 'none';
+        // Убираем обязательность и очищаем поля
+        inputs.forEach(input => {
+            input.required = false;
+            input.value = '';
+        });
+    }
+}
+
+// Автозаполнение логина
+function updateUsername() {
+    const firstName = document.getElementById('manager_first_name').value.toLowerCase().trim();
+    const lastName = document.getElementById('manager_last_name').value.toLowerCase().trim();
+    const usernameField = document.getElementById('manager_username');
+    
+    if (firstName && lastName && !usernameField.value) {
+        let username = firstName.length > 3 ? firstName : firstName.charAt(0);
+        username += '.' + lastName;
+        username = username.replace(/[^a-z0-9.]/g, '');
+        usernameField.value = username;
+    }
+}
+
+// Назначение менеджера к авиакомпании
+function assignManagerToAirline(airlineId, airlineName) {
+    document.getElementById('assign_company_id').value = airlineId;
+    document.getElementById('airline_name_display').textContent = airlineName;
+    
+    const modal = new bootstrap.Modal(document.getElementById('assignManagerModal'));
+    modal.show();
+}
+
+// Редактирование авиакомпании
+function editAirline(id, name, code, country) {
+    // Заполняем форму текущими данными
+    document.getElementById('airline_name').value = name;
+    document.getElementById('airline_code').value = code;
+    document.getElementById('country').value = country;
+    
+    // Меняем заголовок и действие формы
+    document.querySelector('#createAirlineModal .modal-title').innerHTML = 
+        '<i class="fas fa-edit"></i> Редактировать авиакомпанию';
+    
+    // Скрываем секцию создания менеджера при редактировании
+    document.getElementById('create_manager').closest('.card').style.display = 'none';
+    
+    const modal = new bootstrap.Modal(document.getElementById('createAirlineModal'));
+    modal.show();
+}
+
+// Удаление авиакомпании
+function deleteAirline(id, name) {
+    if (confirm(`Удалить авиакомпанию "${name}"?\n\nЭто действие нельзя отменить.`)) {
+        // Создаем форму для удаления
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/admin/delete-airline/' + id;
+        form.style.display = 'none';
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Инициализация
+document.addEventListener('DOMContentLoaded', function() {
+    // Автозаполнение логина
+    const firstNameField = document.getElementById('manager_first_name');
+    const lastNameField = document.getElementById('manager_last_name');
+    
+    if (firstNameField && lastNameField) {
+        firstNameField.addEventListener('input', updateUsername);
+        lastNameField.addEventListener('input', updateUsername);
+    }
+    
+    // Валидация формы
+    const airlineForm = document.querySelector('#createAirlineModal form');
+    if (airlineForm) {
+        airlineForm.addEventListener('submit', function(e) {
+            const createManager = document.getElementById('create_manager').checked;
+            
+            if (createManager) {
+                const requiredFields = ['manager_first_name', 'manager_last_name', 'manager_username', 'manager_email', 'manager_password'];
+                let hasError = false;
+                
+                requiredFields.forEach(fieldName => {
+                    const field = document.getElementById(fieldName);
+                    if (!field.value.trim()) {
+                        hasError = true;
+                        field.classList.add('is-invalid');
+                    } else {
+                        field.classList.remove('is-invalid');
+                    }
+                });
+                
+                if (hasError) {
+                    e.preventDefault();
+                    alert('Заполните все обязательные поля менеджера');
+                    return false;
+                }
+                
+                // Валидация email
+                const email = document.getElementById('manager_email').value;
+                const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                if (!emailRegex.test(email)) {
+                    e.preventDefault();
+                    document.getElementById('manager_email').classList.add('is-invalid');
+                    alert('Введите корректный email адрес для менеджера');
+                    return false;
+                } else {
+                    document.getElementById('manager_email').classList.remove('is-invalid');
+                }
+                
+                const password = document.getElementById('manager_password').value;
+                if (password.length < 6) {
+                    e.preventDefault();
+                    alert('Пароль менеджера должен содержать минимум 6 символов');
+                    return false;
+                }
+            }
+            
+            const airlineCode = document.getElementById('airline_code').value;
+            if (airlineCode.length !== 3) {
+                e.preventDefault();
+                alert('IATA код должен состоять из 3 символов');
+                return false;
+            }
+        });
+    }
+    
+    // Сброс формы при закрытии модального окна
+    document.getElementById('createAirlineModal').addEventListener('hidden.bs.modal', function() {
+        const form = this.querySelector('form');
+        form.reset();
+        form.action = "{{ url_for('create_airline') }}";
+        
+        // Возвращаем оригинальный заголовок
+        document.querySelector('#createAirlineModal .modal-title').innerHTML = 
+            '<i class="fas fa-plane"></i> Создать новую авиакомпанию';
+        
+        // Показываем секцию создания менеджера
+        document.getElementById('create_manager').closest('.card').style.display = 'block';
+        
+        // Скрываем поля менеджера
+        document.getElementById('managerFields').style.display = 'none';
+        
+        // Убираем классы ошибок
+        form.querySelectorAll('.is-invalid').forEach(field => {
+            field.classList.remove('is-invalid');
+        });
+    });
+});
+</script>
+{% endblock %}

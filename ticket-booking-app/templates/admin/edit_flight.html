@@ -1,0 +1,241 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Редактирование рейса - Админ панель{% endblock %}
+
+{% block admin_content %}
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-edit"></i> Редактирование рейса</h2>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Админ панель</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('admin_flights') }}">Рейсы</a></li>
+                            <li class="breadcrumb-item active">Редактирование</li>
+                        </ol>
+                    </nav>
+                </div>
+                <a href="{{ url_for('admin_flights') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Назад к рейсам
+                </a>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-plane"></i> 
+                                Редактирование рейса {{ flight.flight_number }}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST">
+                                {{ form.hidden_tag() }}
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.flight_number.label(class="form-label") }}
+                                            {{ form.flight_number(class="form-control") }}
+                                            {% if form.flight_number.errors %}
+                                                <div class="text-danger">{{ form.flight_number.errors[0] }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.airline_id.label(class="form-label") }}
+                                            {{ form.airline_id(class="form-select") }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.departure_airport_id.label(class="form-label") }}
+                                            {{ form.departure_airport_id(class="form-select") }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.arrival_airport_id.label(class="form-label") }}
+                                            {{ form.arrival_airport_id(class="form-select") }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.departure_time.label(class="form-label") }}
+                                            {{ form.departure_time(class="form-control", type="datetime-local") }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.arrival_time.label(class="form-label") }}
+                                            {{ form.arrival_time(class="form-control", type="datetime-local") }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.aircraft_type.label(class="form-label") }}
+                                            {{ form.aircraft_type(class="form-control") }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.status.label(class="form-label") }}
+                                            {{ form.status(class="form-select") }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            {{ form.total_seats.label(class="form-label") }}
+                                            {{ form.total_seats(class="form-control") }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            {{ form.available_seats.label(class="form-label") }}
+                                            {{ form.available_seats(class="form-control") }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Забронировано мест</label>
+                                            <input type="text" class="form-control" 
+                                                   value="{{ flight.total_seats - flight.available_seats }}" 
+                                                   readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <h6 class="mb-3"><i class="fas fa-tag"></i> Цены</h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            {{ form.economy_price.label(class="form-label") }}
+                                            <div class="input-group">
+                                                {{ form.economy_price(class="form-control") }}
+                                                <span class="input-group-text">₽</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            {{ form.business_price.label(class="form-label") }}
+                                            <div class="input-group">
+                                                {{ form.business_price(class="form-control") }}
+                                                <span class="input-group-text">₽</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            {{ form.first_class_price.label(class="form-label") }}
+                                            <div class="input-group">
+                                                {{ form.first_class_price(class="form-control") }}
+                                                <span class="input-group-text">₽</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('admin_flights') }}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Отмена
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Сохранить изменения
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-info-circle"></i> Информация о рейсе</h6>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>ID рейса:</strong></td>
+                                    <td>{{ flight.id }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Создан:</strong></td>
+                                    <td>{{ flight.created_at.strftime('%d.%m.%Y %H:%M') if flight.created_at else 'Не указано' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Бронирований:</strong></td>
+                                    <td>
+                                        <span class="badge bg-info">{{ flight.bookings|length }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Заполненность:</strong></td>
+                                    <td>
+                                        {% set occupancy = ((flight.total_seats - flight.available_seats) / flight.total_seats * 100) if flight.total_seats > 0 else 0 %}
+                                        <div class="progress">
+                                            <div class="progress-bar" style="width: {{ occupancy }}%">
+                                                {{ "%.1f"|format(occupancy) }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Внимание</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-warning">
+                                <small>
+                                    <strong>Важно:</strong> Изменение времени вылета или количества мест 
+                                    может повлиять на существующие бронирования. 
+                                    Убедитесь, что пассажиры уведомлены об изменениях.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Автоматический расчет доступных мест
+document.addEventListener('DOMContentLoaded', function() {
+    const totalSeatsInput = document.querySelector('input[name="total_seats"]');
+    const availableSeatsInput = document.querySelector('input[name="available_seats"]');
+    
+    function updateAvailableSeats() {
+        const totalSeats = parseInt(totalSeatsInput.value) || 0;
+        const currentAvailable = parseInt(availableSeatsInput.value) || 0;
+        const bookedSeats = {{ flight.total_seats - flight.available_seats }};
+        
+        if (totalSeats < bookedSeats) {
+            alert(`Внимание: Общее количество мест (${totalSeats}) меньше уже забронированных (${bookedSeats})`);
+        }
+    }
+    
+    if (totalSeatsInput) {
+        totalSeatsInput.addEventListener('change', updateAvailableSeats);
+    }
+});
+</script>
+{% endblock %}

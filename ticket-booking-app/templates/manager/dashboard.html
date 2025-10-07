@@ -1,0 +1,233 @@
+{% extends "manager/base.html" %}
+
+{% block title %}Панель менеджера{% endblock %}
+
+{% block manager_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-chart-line"></i> Статистика сервиса</h2>
+    <span class="badge bg-warning fs-6">Менеджер</span>
+</div>
+
+<!-- Временные фильтры -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-filter"></i> Временной период</h6>
+    </div>
+    <div class="card-body">
+        <div class="btn-group w-100" role="group">
+            <a href="{{ url_for('manager_dashboard', period='today') }}" 
+               class="btn btn-outline-primary {% if current_period == 'today' %}active{% endif %}">
+                <i class="fas fa-calendar-day"></i> Сегодня
+            </a>
+            <a href="{{ url_for('manager_dashboard', period='week') }}" 
+               class="btn btn-outline-primary {% if current_period == 'week' %}active{% endif %}">
+                <i class="fas fa-calendar-week"></i> Неделя
+            </a>
+            <a href="{{ url_for('manager_dashboard', period='month') }}" 
+               class="btn btn-outline-primary {% if current_period == 'month' %}active{% endif %}">
+                <i class="fas fa-calendar-alt"></i> Месяц
+            </a>
+            <a href="{{ url_for('manager_dashboard', period='all') }}" 
+               class="btn btn-outline-primary {% if current_period == 'all' %}active{% endif %}">
+                <i class="fas fa-infinity"></i> Всё время
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Основная статистика -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-plane fa-2x mb-2"></i>
+                <h3>{{ total_flights }}</h3>
+                <p class="mb-0">Всего рейсов</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-plane-departure fa-2x mb-2"></i>
+                <h3>{{ active_flights }}</h3>
+                <p class="mb-0">Активных рейсов</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-plane-arrival fa-2x mb-2"></i>
+                <h3>{{ completed_flights }}</h3>
+                <p class="mb-0">Завершённых рейсов</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x mb-2"></i>
+                <h3>{{ total_passengers }}</h3>
+                <p class="mb-0">Пассажиров</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Финансовая статистика -->
+<div class="row mb-4">
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-ruble-sign fa-2x mb-2"></i>
+                <h3>{{ "%.0f"|format(total_revenue) }} ₽</h3>
+                <p class="mb-0">Общая выручка</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                <h3>{{ confirmed_bookings }}</h3>
+                <p class="mb-0">Подтверждённых</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-times-circle fa-2x mb-2"></i>
+                <h3>{{ cancelled_bookings }}</h3>
+                <p class="mb-0">Отменённых</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if refunded_bookings > 0 %}
+<div class="row mb-4">
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-undo fa-2x mb-2"></i>
+                <h3>{{ refunded_bookings }}</h3>
+                <p class="mb-0">Возвращённых</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Быстрые действия -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt"></i> Быстрые действия</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('manager_flights') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-plane"></i> Управление рейсами
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('manager_add_flight') }}" class="btn btn-success w-100">
+                            <i class="fas fa-plus"></i> Добавить рейс
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('manager_passengers') }}" class="btn btn-info w-100">
+                            <i class="fas fa-users"></i> Просмотр пассажиров
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('search_flights') }}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-search"></i> Поиск рейсов
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Последние бронирования -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-clock"></i> Последние бронирования</h5>
+    </div>
+    <div class="card-body">
+        {% if recent_bookings %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Код бронирования</th>
+                            <th>Рейс</th>
+                            <th>Пассажир</th>
+                            <th>Дата бронирования</th>
+                            <th>Сумма</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in recent_bookings %}
+                        <tr>
+                            <td><strong>{{ booking.booking_reference }}</strong></td>
+                            <td>
+                                <div>{{ booking.flight.flight_number }}</div>
+                                <small class="text-muted">{{ booking.flight.departure_airport.city }} → {{ booking.flight.arrival_airport.city }}</small>
+                            </td>
+                            <td>{{ booking.passenger_first_name }} {{ booking.passenger_last_name }}</td>
+                            <td>{{ booking.booking_date.strftime('%d.%m.%Y %H:%M') }}</td>
+                            <td>{{ "%.0f"|format(booking.price_paid) }} ₽</td>
+                            <td>
+                                {% if booking.status == 'confirmed' %}
+                                    <span class="badge bg-success">Подтверждён</span>
+                                {% elif booking.status == 'cancelled' %}
+                                    <span class="badge bg-danger">Отменён</span>
+                                {% elif booking.status == 'refunded' %}
+                                    <span class="badge bg-info">Возвращён</span>
+                                {% elif booking.status == 'checked_in' %}
+                                    <span class="badge bg-warning">Регистрация</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ booking.status|title }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Бронирований пока нет</h5>
+                <p class="text-muted">Когда появятся бронирования, они отобразятся здесь</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Информация о текущем периоде -->
+<div class="card mt-4">
+    <div class="card-body text-center">
+        <small class="text-muted">
+            <i class="fas fa-info-circle"></i>
+            {% if current_period == 'today' %}
+                Статистика за сегодня ({{ now.strftime('%d.%m.%Y') }})
+            {% elif current_period == 'week' %}
+                Статистика за последние 7 дней
+            {% elif current_period == 'month' %}
+                Статистика за последние 30 дней
+            {% else %}
+                Статистика за всё время
+            {% endif %}
+        </small>
+    </div>
+</div>
+{% endblock %}

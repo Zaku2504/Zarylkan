@@ -1,0 +1,447 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль пользователя{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Профиль пользователя -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-user-circle fa-5x text-primary"></i>
+                    </div>
+                    <h4>{{ current_user.first_name }} {{ current_user.last_name }}</h4>
+                    <p class="text-muted">{{ current_user.email }}</p>
+                    
+                    {% if current_user.role == 'admin' %}
+                        <span class="badge bg-danger fs-6">Администратор</span>
+                    {% elif current_user.role == 'manager' %}
+                        <span class="badge bg-warning fs-6">Менеджер</span>
+                    {% else %}
+                        <span class="badge bg-primary fs-6">Пассажир</span>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <div class="row text-center">
+                        <div class="col-12">
+                            <h5>{{ bookings|length }}</h5>
+                            <small class="text-muted">Всего бронирований</small>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="text-start">
+                        <small class="text-muted">
+                            <i class="fas fa-phone"></i> {{ current_user.phone or 'Не указан' }}<br>
+                            <i class="fas fa-calendar"></i> Регистрация: {{ current_user.created_at.strftime('%d.%m.%Y') }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Бронирования -->
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3><i class="fas fa-ticket-alt"></i> Мои бронирования</h3>
+                <a href="{{ url_for('search_flights') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Новое бронирование
+                </a>
+            </div>
+            
+            {% if bookings %}
+                {% for booking in bookings %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="mb-0">
+                                        {{ booking.flight.departure_airport.city }} → {{ booking.flight.arrival_airport.city }}
+                                    </h5>
+                                    <span class="badge bg-{% if booking.status == 'confirmed' %}success{% elif booking.status == 'checked_in' %}warning{% elif booking.status == 'cancelled' %}secondary{% elif booking.status == 'refunded' %}info{% else %}danger{% endif %}">
+                                        {% if booking.status == 'confirmed' %}Подтвержден
+                                        {% elif booking.status == 'checked_in' %}Регистрация
+                                        {% elif booking.status == 'cancelled' %}Отменен
+                                        {% elif booking.status == 'refunded' %}Возвращен
+                                        {% else %}{{ booking.status|title }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <small class="text-muted">Рейс</small>
+                                        <div class="fw-bold">{{ booking.flight.flight_number }} ({{ booking.flight.airline.name }})</div>
+                                        <small class="text-muted">{{ booking.flight.aircraft_type }}</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <small class="text-muted">Код бронирования</small>
+                                        <div class="fw-bold">{{ booking.booking_reference }}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <small class="text-muted">Вылет</small>
+                                        <div>{{ booking.flight.departure_time.strftime('%d.%m.%Y %H:%M') }}</div>
+                                        <small class="text-muted">{{ booking.flight.departure_airport.name }}</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <small class="text-muted">Прилет</small>
+                                        <div>{{ booking.flight.arrival_time.strftime('%d.%m.%Y %H:%M') }}</div>
+                                        <small class="text-muted">{{ booking.flight.arrival_airport.name }}</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <small class="text-muted">Пассажир</small>
+                                        <div>{{ booking.passenger_first_name }} {{ booking.passenger_last_name }}</div>
+                                        <small class="text-muted">{{ booking.passenger_email }}</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <small class="text-muted">Класс</small>
+                                        <div class="text-capitalize">
+                                            {% if booking.seat_class == 'economy' %}Эконом
+                                            {% elif booking.seat_class == 'business' %}Бизнес
+                                            {% elif booking.seat_class == 'first' %}Первый
+                                            {% endif %}
+                                        </div>
+                                        {% if booking.seat_number %}
+                                            <small class="text-muted">Место: {{ booking.seat_number }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 text-end">
+                                <div class="mb-3">
+                                    <div class="h4 text-success">{{ "%.0f"|format(booking.price_paid) }} ₽</div>
+                                    <small class="text-muted">Оплачено</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <small class="text-muted">Забронировано: {{ booking.booking_date.strftime('%d.%m.%Y') }}</small>
+                                </div>
+                                
+                                {% if booking.status == 'confirmed' and booking.flight.departure_time > now %}
+                                    {% set hours_left = booking.get_time_until_departure() %}
+                                    {% if hours_left > 0 %}
+                                        <a href="{{ url_for('cancel_booking', booking_id=booking.id) }}" class="btn btn-sm btn-outline-danger mb-2">
+                                            <i class="fas fa-times"></i> 
+                                            {% if hours_left > 24 %}
+                                                Отменить (возврат)
+                                            {% else %}
+                                                Отменить (без возврата)
+                                            {% endif %}
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+                                
+                                <button class="btn btn-sm btn-outline-primary" onclick="showBookingDetails('{{ booking.id }}')">
+                                    <i class="fas fa-info-circle"></i> Подробнее
+                                </button>
+                            </div>
+                        </div>
+                        
+                        {% if booking.special_requests %}
+                        <div class="mt-3 pt-3 border-top">
+                            <small class="text-muted">Особые пожелания:</small>
+                            <div class="small">{{ booking.special_requests }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="card bg-light">
+                        <div class="card-body py-5">
+                            <i class="fas fa-ticket-alt fa-3x text-muted mb-4"></i>
+                            <h4 class="text-muted">У вас пока нет бронирований</h4>
+                            <p class="text-muted">Найдите подходящий рейс и забронируйте билет</p>
+                            <a href="{{ url_for('search_flights') }}" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Найти рейсы
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для деталей бронирования -->
+<div class="modal fade" id="bookingDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-ticket-alt"></i> Детали бронирования
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="bookingDetailsContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Загружаем детали бронирования...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Закрыть
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showBookingDetails(bookingId) {
+    // Показываем модальное окно
+    const modal = new bootstrap.Modal(document.getElementById('bookingDetailsModal'));
+    modal.show();
+    
+    // Загружаем детали бронирования
+    fetch(`/booking/${bookingId}/details`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки данных');
+            }
+            return response.json();
+        })
+        .then(data => {
+            displayBookingDetails(data);
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            document.getElementById('bookingDetailsContent').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Ошибка загрузки деталей бронирования: ${error.message}
+                </div>
+            `;
+        });
+}
+
+function displayBookingDetails(booking) {
+    const content = document.getElementById('bookingDetailsContent');
+    
+    // Определяем цвет статуса
+    const statusColors = {
+        'confirmed': 'success',
+        'checked_in': 'warning',
+        'cancelled': 'secondary',
+        'refunded': 'info'
+    };
+    
+    const statusLabels = {
+        'confirmed': 'Подтвержден',
+        'checked_in': 'Регистрация пройдена',
+        'cancelled': 'Отменен',
+        'refunded': 'Возвращен'
+    };
+    
+    content.innerHTML = `
+        <div class="row">
+            <!-- Информация о бронировании -->
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-info-circle"></i> Информация о бронировании</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col-4"><strong>Код бронирования:</strong></div>
+                            <div class="col-8"><span class="badge bg-primary">${booking.booking_reference}</span></div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4"><strong>Статус:</strong></div>
+                            <div class="col-8">
+                                <span class="badge bg-${statusColors[booking.status]}">${statusLabels[booking.status]}</span>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4"><strong>Дата бронирования:</strong></div>
+                            <div class="col-8">${booking.booking_date}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4"><strong>Стоимость:</strong></div>
+                            <div class="col-8"><span class="h5 text-success">${booking.price} ₽</span></div>
+                        </div>
+                        ${booking.cancellation.cancelled_at ? `
+                        <div class="row mb-2">
+                            <div class="col-4"><strong>Отменено:</strong></div>
+                            <div class="col-8">${booking.cancellation.cancelled_at}</div>
+                        </div>
+                        ${booking.cancellation.cancellation_reason ? `
+                        <div class="row mb-2">
+                            <div class="col-4"><strong>Причина:</strong></div>
+                            <div class="col-8">${booking.cancellation.cancellation_reason}</div>
+                        </div>
+                        ` : ''}
+                        ` : ''}
+                    </div>
+                </div>
+                
+                <!-- Информация о пассажире -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-user"></i> Информация о пассажире</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col-4"><strong>Имя:</strong></div>
+                            <div class="col-8">${booking.passenger.first_name} ${booking.passenger.last_name}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4"><strong>Email:</strong></div>
+                            <div class="col-8">${booking.passenger.email || 'Не указан'}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4"><strong>Телефон:</strong></div>
+                            <div class="col-8">${booking.passenger.phone || 'Не указан'}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Информация о рейсе -->
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-plane"></i> Информация о рейсе</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col-4"><strong>Рейс:</strong></div>
+                            <div class="col-8">${booking.flight.number}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4"><strong>Авиакомпания:</strong></div>
+                            <div class="col-8">${booking.flight.airline}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4"><strong>Тип самолета:</strong></div>
+                            <div class="col-8">${booking.flight.aircraft_type || 'Не указан'}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4"><strong>Продолжительность:</strong></div>
+                            <div class="col-8">${booking.flight.duration}</div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row mb-2">
+                            <div class="col-4"><strong>Вылет:</strong></div>
+                            <div class="col-8">
+                                <div>${booking.flight.departure.time}</div>
+                                <small class="text-muted">${booking.flight.departure.airport} (${booking.flight.departure.code})</small>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4"><strong>Прилет:</strong></div>
+                            <div class="col-8">
+                                <div>${booking.flight.arrival.time}</div>
+                                <small class="text-muted">${booking.flight.arrival.airport} (${booking.flight.arrival.code})</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Информация о месте -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-chair"></i> Информация о месте</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col-4"><strong>Класс:</strong></div>
+                            <div class="col-8">
+                                <span class="badge bg-${booking.seat.class === 'economy' ? 'success' : booking.seat.class === 'business' ? 'warning' : 'danger'}">
+                                    ${booking.seat.class_display}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4"><strong>Номер места:</strong></div>
+                            <div class="col-8">${booking.seat.number || 'Не назначено'}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Дополнительные услуги -->
+        ${booking.services.baggage_count || booking.services.meal_preference || booking.services.special_requests ? `
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-plus-circle"></i> Дополнительные услуги</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    ${booking.services.baggage_count ? `
+                    <div class="col-md-4 mb-2">
+                        <strong>Багаж:</strong> ${booking.services.baggage_count} место
+                    </div>
+                    ` : ''}
+                    ${booking.services.meal_preference ? `
+                    <div class="col-md-4 mb-2">
+                        <strong>Питание:</strong> ${booking.services.meal_preference}
+                    </div>
+                    ` : ''}
+                </div>
+                ${booking.services.special_requests ? `
+                <div class="mt-2">
+                    <strong>Особые пожелания:</strong><br>
+                    <small class="text-muted">${booking.services.special_requests}</small>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+        ` : ''}
+        
+        <!-- Информация об отмене -->
+        ${booking.cancellation.can_be_cancelled || booking.cancellation.cancelled_at ? `
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Информация об отмене</h6>
+            </div>
+            <div class="card-body">
+                ${booking.cancellation.can_be_cancelled ? `
+                <div class="alert alert-info">
+                    <i class="fas fa-clock"></i>
+                    <strong>Время до вылета:</strong> 
+                    ${booking.cancellation.time_until_departure > 24 
+                        ? Math.floor(booking.cancellation.time_until_departure / 24) + ' дней ' + Math.floor(booking.cancellation.time_until_departure % 24) + ' часов'
+                        : Math.floor(booking.cancellation.time_until_departure) + ' часов'
+                    }
+                </div>
+                ` : ''}
+                ${booking.cancellation.cancellation_type === 'refund' ? `
+                <div class="alert alert-success">
+                    <i class="fas fa-undo"></i>
+                    <strong>Возврат возможен!</strong> Полная стоимость билета будет возвращена.
+                </div>
+                ` : booking.cancellation.cancellation_type === 'no_refund' ? `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Возврат невозможен!</strong> Менее 24 часов до вылета.
+                </div>
+                ` : ''}
+            </div>
+        </div>
+        ` : ''}
+    `;
+}
+</script>
+{% endblock %}

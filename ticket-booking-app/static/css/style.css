@@ -1,0 +1,452 @@
+/* Основные цвета в стиле авиасейлс */
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    
+    --aviasales-blue: #0f4c75;
+    --aviasales-orange: #ff6b35;
+    --aviasales-green: #00c851;
+    --aviasales-gray: #f5f5f5;
+}
+
+/* Общие стили */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* Герой секция */
+.hero-section {
+    background: linear-gradient(135deg, var(--aviasales-blue) 0%, var(--primary-color) 100%);
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--aviasales-blue) 0%, var(--primary-color) 100%) !important;
+}
+
+/* Карточки рейсов */
+.flight-card {
+    border: none;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.flight-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.hover-card {
+    transition: all 0.3s ease;
+}
+
+.hover-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
+}
+
+/* Форма поиска */
+.search-form {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+/* Линия полета */
+.flight-path {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.flight-line {
+    position: relative;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, var(--aviasales-blue), var(--aviasales-green));
+    margin: 15px 0;
+    border-radius: 2px;
+}
+
+.flight-line::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 0;
+    width: 6px;
+    height: 6px;
+    background: var(--aviasales-blue);
+    border-radius: 50%;
+}
+
+.flight-line::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: 0;
+    width: 6px;
+    height: 6px;
+    background: var(--aviasales-green);
+    border-radius: 50%;
+}
+
+.flight-line i {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--primary-color);
+    background: white;
+    padding: 0 8px;
+    font-size: 16px;
+}
+
+/* Кнопки */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, var(--aviasales-blue), var(--primary-color));
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(45deg, #0a3a5c, #0056b3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+}
+
+.btn-success {
+    background: var(--aviasales-green);
+    border: none;
+}
+
+.btn-warning {
+    background: var(--aviasales-orange);
+    border: none;
+}
+
+/* Навигация */
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.navbar-brand i {
+    color: var(--aviasales-orange);
+}
+
+/* Карточки статистики */
+.card.bg-primary {
+    background: linear-gradient(45deg, var(--aviasales-blue), var(--primary-color)) !important;
+}
+
+.card.bg-success {
+    background: linear-gradient(45deg, var(--aviasales-green), #20c997) !important;
+}
+
+.card.bg-warning {
+    background: linear-gradient(45deg, var(--aviasales-orange), var(--warning-color)) !important;
+}
+
+.card.bg-info {
+    background: linear-gradient(45deg, var(--info-color), #6f42c1) !important;
+}
+
+/* Цены */
+.price-item {
+    margin-bottom: 8px;
+}
+
+.price-item .badge {
+    font-size: 0.7rem;
+    margin-bottom: 2px;
+}
+
+/* Формы */
+.form-control:focus {
+    border-color: var(--aviasales-blue);
+    box-shadow: 0 0 0 0.2rem rgba(15, 76, 117, 0.25);
+}
+
+.form-select:focus {
+    border-color: var(--aviasales-blue);
+    box-shadow: 0 0 0 0.2rem rgba(15, 76, 117, 0.25);
+}
+
+/* Иконки функций */
+.feature-icon {
+    transition: transform 0.3s ease;
+}
+
+.feature-icon:hover {
+    transform: scale(1.1);
+}
+
+/* Алерты */
+.alert {
+    border: none;
+    border-radius: 10px;
+}
+
+/* Футер */
+footer {
+    margin-top: auto;
+}
+
+footer a:hover {
+    color: var(--aviasales-orange) !important;
+}
+
+/* Модальные окна */
+.modal-content {
+    border-radius: 15px;
+    border: none;
+}
+
+.modal-header {
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 15px 15px 0 0;
+}
+
+/* Таблицы */
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: var(--aviasales-blue);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(15, 76, 117, 0.05);
+}
+
+/* Бейджи */
+.badge {
+    font-size: 0.8rem;
+    padding: 0.4em 0.8em;
+}
+
+/* Профиль пользователя */
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 4px solid var(--primary-color);
+}
+
+/* Анимации */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .hero-section {
+        min-height: auto;
+        padding: 2rem 0;
+    }
+    
+    .flight-card .row {
+        text-align: center;
+    }
+    
+    .flight-line {
+        width: 80%;
+        margin: 10px auto;
+    }
+    
+    .search-form {
+        padding: 20px;
+        margin: 10px;
+    }
+    
+    .container-fluid {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        margin-bottom: 5px;
+    }
+    
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .navbar-nav {
+        text-align: center;
+    }
+    
+    .modal-dialog {
+        margin: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+    
+    .hero-section p {
+        font-size: 1rem;
+    }
+    
+    .flight-card {
+        margin-bottom: 1rem;
+    }
+    
+    .btn {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .form-control {
+        font-size: 0.9rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.8rem;
+    }
+    
+    .card-header h5 {
+        font-size: 1rem;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+    }
+}
+
+/* Улучшенная адаптивность для панелей */
+@media (max-width: 992px) {
+    .col-md-3.col-lg-2 {
+        margin-bottom: 1rem;
+    }
+    
+    .list-group-item {
+        padding: 0.75rem 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .col-md-9.col-lg-10 {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* Темная тема для админки */
+.admin-dark {
+    background-color: #1a1a1a;
+    color: #ffffff;
+}
+
+.admin-dark .card {
+    background-color: #2d2d2d;
+    border: 1px solid #404040;
+}
+
+.admin-dark .list-group-item {
+    background-color: #2d2d2d;
+    border-color: #404040;
+    color: #ffffff;
+}
+
+.admin-dark .list-group-item:hover {
+    background-color: #404040;
+}
+
+/* Дополнительные утилиты */
+.text-aviasales-blue {
+    color: var(--aviasales-blue) !important;
+}
+
+.text-aviasales-orange {
+    color: var(--aviasales-orange) !important;
+}
+
+.bg-aviasales-blue {
+    background-color: var(--aviasales-blue) !important;
+}
+
+.bg-aviasales-orange {
+    background-color: var(--aviasales-orange) !important;
+}
+
+/* Загрузчик */
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--aviasales-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Кастомный скролл */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--aviasales-blue);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #0a3a5c;
+}

@@ -1,0 +1,299 @@
+{% extends "manager/base.html" %}
+
+{% block title %}Добавить рейс{% endblock %}
+
+{% block manager_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="fas fa-plus"></i> Добавить новый рейс</h3>
+    <a href="{{ url_for('manager_flights') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Назад к рейсам
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Информация о рейсе</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.flight_number.label(class="form-label") }}
+                                {{ form.flight_number(class="form-control") }}
+                                {% if form.flight_number.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.flight_number.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.aircraft_type.label(class="form-label") }}
+                                {{ form.aircraft_type(class="form-control") }}
+                                {% if form.aircraft_type.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.aircraft_type.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.departure_airport_id.label(class="form-label") }}
+                                {{ form.departure_airport_id(class="form-select") }}
+                                {% if form.departure_airport_id.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.departure_airport_id.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.arrival_airport_id.label(class="form-label") }}
+                                {{ form.arrival_airport_id(class="form-select") }}
+                                {% if form.arrival_airport_id.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.arrival_airport_id.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.departure_time.label(class="form-label") }}
+                                {{ form.departure_time(class="form-control") }}
+                                {% if form.departure_time.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.departure_time.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.arrival_time.label(class="form-label") }}
+                                {{ form.arrival_time(class="form-control") }}
+                                {% if form.arrival_time.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.arrival_time.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if current_user.is_admin() %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.airline_id.label(class="form-label") }}
+                                {{ form.airline_id(class="form-select") }}
+                                {% if form.airline_id.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.airline_id.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.status.label(class="form-label") }}
+                                {{ form.status(class="form-select") }}
+                                {% if form.status.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.status.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Авиакомпания</label>
+                                <input type="text" class="form-control" value="{{ current_user.company.name if current_user.company else 'Не назначена' }}" readonly>
+                                <small class="text-muted">Менеджер может добавлять рейсы только для своей авиакомпании</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.status.label(class="form-label") }}
+                                {{ form.status(class="form-select") }}
+                                {% if form.status.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.status.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.total_seats.label(class="form-label") }}
+                                {{ form.total_seats(class="form-control") }}
+                                {% if form.total_seats.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.total_seats.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.available_seats.label(class="form-label") }}
+                                {{ form.available_seats(class="form-control") }}
+                                {% if form.available_seats.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.available_seats.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Занято мест</label>
+                                <input type="text" class="form-control" value="0" readonly>
+                                <small class="text-muted">Автоматически рассчитывается</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.economy_price.label(class="form-label") }}
+                                {{ form.economy_price(class="form-control") }}
+                                {% if form.economy_price.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.economy_price.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.business_price.label(class="form-label") }}
+                                {{ form.business_price(class="form-control") }}
+                                {% if form.business_price.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.business_price.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.first_class_price.label(class="form-label") }}
+                                {{ form.first_class_price(class="form-control") }}
+                                {% if form.first_class_price.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.first_class_price.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('manager_flights') }}" class="btn btn-outline-secondary me-md-2">
+                            <i class="fas fa-times"></i> Отмена
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Справка</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Номер рейса:</strong><br>
+                    <small class="text-muted">Уникальный номер рейса (например: SU123, A4-567)</small>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Тип самолета:</strong><br>
+                    <small class="text-muted">Модель самолета (например: Boeing 737, Airbus A320)</small>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Места:</strong><br>
+                    <small class="text-muted">Общее количество мест должно быть больше или равно доступным местам</small>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Цены:</strong><br>
+                    <small class="text-muted">Цены указаны в рублях. Эконом класс обязателен</small>
+                </div>
+                
+                {% if not current_user.is_admin() %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Ограничения менеджера:</strong><br>
+                    Вы можете добавлять рейсы только для авиакомпании {{ current_user.company.name if current_user.company else 'к которой вы привязаны' }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

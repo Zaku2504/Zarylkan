@@ -1,0 +1,200 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Админ панель{% endblock %}
+
+{% block admin_content %}
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-chart-line"></i> Статистика сервиса</h2>
+                <span class="badge bg-success fs-6">Администратор</span>
+            </div>
+            
+            <!-- Фильтры по времени -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3"><i class="fas fa-filter"></i> Фильтр по времени</h6>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-primary" onclick="filterStats('today')">
+                                    <i class="fas fa-calendar-day"></i> Сегодня
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" onclick="filterStats('week')">
+                                    <i class="fas fa-calendar-week"></i> Неделя
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" onclick="filterStats('month')">
+                                    <i class="fas fa-calendar-alt"></i> Месяц
+                                </button>
+                                <button type="button" class="btn btn-outline-primary active" onclick="filterStats('all')">
+                                    <i class="fas fa-infinity"></i> Всё время
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Статистика -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-plane fa-2x mb-2"></i>
+                            <h3 id="total-flights">{{ total_flights }}</h3>
+                            <p class="mb-0">Всего рейсов</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-plane-departure fa-2x mb-2"></i>
+                            <h3 id="active-flights">{{ active_flights }}</h3>
+                            <p class="mb-0">Активных рейсов</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-secondary text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-plane-arrival fa-2x mb-2"></i>
+                            <h3 id="completed-flights">{{ completed_flights }}</h3>
+                            <p class="mb-0">Завершённых рейсов</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-users fa-2x mb-2"></i>
+                            <h3 id="total-passengers">{{ total_passengers }}</h3>
+                            <p class="mb-0">Забронированных пассажиров</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6 mb-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-ruble-sign fa-2x mb-2"></i>
+                            <h3 id="total-revenue">{{ "%.0f"|format(total_revenue) }} ₽</h3>
+                            <p class="mb-0">Общий доход</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-ticket-alt fa-2x mb-2"></i>
+                            <h3 id="total-bookings">{{ total_bookings }}</h3>
+                            <p class="mb-0">Всего бронирований</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <!-- Последние бронирования -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-clock"></i> Последние бронирования</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_bookings %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Код</th>
+                                        <th>Пассажир</th>
+                                        <th>Рейс</th>
+                                        <th>Маршрут</th>
+                                        <th>Дата</th>
+                                        <th>Сумма</th>
+                                        <th>Статус</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in recent_bookings %}
+                                    <tr>
+                                        <td><code>{{ booking.booking_reference }}</code></td>
+                                        <td>{{ booking.passenger_first_name }} {{ booking.passenger_last_name }}</td>
+                                        <td>{{ booking.flight.flight_number }}</td>
+                                        <td>{{ booking.flight.departure_airport.city }} → {{ booking.flight.arrival_airport.city }}</td>
+                                        <td>{{ booking.booking_date.strftime('%d.%m.%Y %H:%M') }}</td>
+                                        <td class="text-success fw-bold">{{ "%.0f"|format(booking.price_paid) }} ₽</td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if booking.status == 'confirmed' else 'warning' if booking.status == 'checked_in' else 'danger' }}">
+                                                {{ booking.status }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Бронирований пока нет</h5>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Фильтрация статистики по времени
+function filterStats(period) {
+    // Убираем активный класс со всех кнопок
+    document.querySelectorAll('.btn-group .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Добавляем активный класс к выбранной кнопке
+    event.target.classList.add('active');
+    
+    // Показываем загрузку
+    showLoading();
+    
+    // Загружаем данные для выбранного периода
+    fetch(`/admin/api/statistics?period=${period}`)
+        .then(response => response.json())
+        .then(data => {
+            updateStatistics(data);
+            hideLoading();
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки статистики:', error);
+            hideLoading();
+        });
+}
+
+// Обновление статистики на странице
+function updateStatistics(data) {
+    document.getElementById('total-flights').textContent = data.total_flights;
+    document.getElementById('active-flights').textContent = data.active_flights;
+    document.getElementById('completed-flights').textContent = data.completed_flights;
+    document.getElementById('total-passengers').textContent = data.total_passengers;
+    document.getElementById('total-revenue').textContent = data.total_revenue.toLocaleString() + ' ₽';
+    document.getElementById('total-bookings').textContent = data.total_bookings;
+}
+
+// Показать загрузку
+function showLoading() {
+    const cards = document.querySelectorAll('.card-body h3');
+    cards.forEach(card => {
+        card.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    });
+}
+
+// Скрыть загрузку
+function hideLoading() {
+    // Загрузка скрывается автоматически при обновлении данных
+}
+
+
+</script>
+{% endblock %}

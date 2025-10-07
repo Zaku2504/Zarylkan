@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}{{ flight.flight_number }} - Детали рейса{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-plane"></i> Рейс {{ flight.flight_number }}</h2>
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('book_flight', flight_id=flight.id) }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-ticket-alt"></i> Забронировать
+            </a>
+        {% else %}
+            <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-sign-in-alt"></i> Войти для бронирования
+            </a>
+        {% endif %}
+    </div>
+    
+    <div class="row">
+        <!-- Основная информация о рейсе -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Информация о рейсе</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Маршрут -->
+                    <div class="row text-center mb-4">
+                        <div class="col-md-4">
+                            <div class="h3">{{ flight.departure_time.strftime('%H:%M') }}</div>
+                            <div class="h5">{{ flight.departure_airport.city }}</div>
+                            <div class="text-muted">{{ flight.departure_airport.name }}</div>
+                            <div class="badge bg-secondary">{{ flight.departure_airport.code }}</div>
+                            <div class="mt-2 text-muted">{{ flight.departure_time.strftime('%d %B %Y') }}</div>
+                        </div>
+                        
+                        <div class="col-md-4 d-flex flex-column justify-content-center">
+                            <div class="flight-path">
+                                <small class="text-muted">Время в полете</small>
+                                <div class="flight-line">
+                                    <i class="fas fa-plane"></i>
+                                </div>
+                                <div class="fw-bold">{{ flight.duration }}</div>
+                                <small class="text-muted">{{ flight.airline.name }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="h3">{{ flight.arrival_time.strftime('%H:%M') }}</div>
+                            <div class="h5">{{ flight.arrival_airport.city }}</div>
+                            <div class="text-muted">{{ flight.arrival_airport.name }}</div>
+                            <div class="badge bg-secondary">{{ flight.arrival_airport.code }}</div>
+                            <div class="mt-2 text-muted">{{ flight.arrival_time.strftime('%d %B %Y') }}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Дополнительная информация -->
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>Авиакомпания:</strong>
+                            <div>{{ flight.airline.name }} ({{ flight.airline.code }})</div>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Тип самолета:</strong>
+                            <div>{{ flight.aircraft_type or 'Не указан' }}</div>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Статус:</strong>
+                            <div>
+                                <span class="badge bg-{% if flight.status == 'scheduled' %}primary{% elif flight.status == 'delayed' %}warning{% elif flight.status == 'cancelled' %}danger{% elif flight.status == 'boarding' %}info{% elif flight.status == 'departed' %}success{% endif %}">
+                                    {% if flight.status == 'scheduled' %}Запланирован
+                                    {% elif flight.status == 'delayed' %}Задержан
+                                    {% elif flight.status == 'cancelled' %}Отменен
+                                    {% elif flight.status == 'boarding' %}Посадка
+                                    {% elif flight.status == 'departed' %}Вылетел
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Доступно мест:</strong>
+                            <div class="fw-bold">{{ flight.available_seats }} из {{ flight.total_seats }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Цены и бронирование -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-tag"></i> Цены</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Эконом класс -->
+                    <div class="price-card mb-3 p-3 border rounded">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">Эконом класс</h6>
+                                <small class="text-muted">Стандартный сервис</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="h5 text-success mb-0">{{ "%.0f"|format(flight.economy_price) }} ₽</div>
+                                <small class="text-muted">за пассажира</small>
+                            </div>
+                        </div>
+                        {% if current_user.is_authenticated %}
+                            <a href="{{ url_for('book_flight', flight_id=flight.id) }}?class=economy" class="btn btn-outline-success w-100 mt-2">
+                                Выбрать эконом
+                            </a>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Бизнес класс -->
+                    {% if flight.business_price %}
+                    <div class="price-card mb-3 p-3 border rounded">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">Бизнес класс</h6>
+                                <small class="text-muted">Улучшенный сервис</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="h5 text-warning mb-0">{{ "%.0f"|format(flight.business_price) }} ₽</div>
+                                <small class="text-muted">за пассажира</small>
+                            </div>
+                        </div>
+                        {% if current_user.is_authenticated %}
+                            <a href="{{ url_for('book_flight', flight_id=flight.id) }}?class=business" class="btn btn-outline-warning w-100 mt-2">
+                                Выбрать бизнес
+                            </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Первый класс -->
+                    {% if flight.first_class_price %}
+                    <div class="price-card mb-3 p-3 border rounded">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">Первый класс</h6>
+                                <small class="text-muted">Премиум сервис</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="h5 text-info mb-0">{{ "%.0f"|format(flight.first_class_price) }} ₽</div>
+                                <small class="text-muted">за пассажира</small>
+                            </div>
+                        </div>
+                        {% if current_user.is_authenticated %}
+                            <a href="{{ url_for('book_flight', flight_id=flight.id) }}?class=first" class="btn btn-outline-info w-100 mt-2">
+                                Выбрать первый
+                            </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    {% if not current_user.is_authenticated %}
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('login') }}" class="btn btn-primary w-100">
+                                <i class="fas fa-sign-in-alt"></i> Войти для бронирования
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Дополнительная информация -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info"></i> Полезная информация</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6><i class="fas fa-suitcase"></i> Багаж</h6>
+                            <ul class="list-unstyled">
+                                <li>✓ Ручная кладь включена</li>
+                                <li>✓ Регистрируемый багаж (за доплату)</li>
+                                <li>✓ Максимальный вес: 23 кг</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6><i class="fas fa-utensils"></i> Питание</h6>
+                            <ul class="list-unstyled">
+                                <li>✓ Напитки включены</li>
+                                <li>✓ Горячее питание (за доплату)</li>
+                                <li>✓ Специальное меню по запросу</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6><i class="fas fa-wifi"></i> Сервисы</h6>
+                            <ul class="list-unstyled">
+                                <li>✓ Развлекательная система</li>
+                                <li>✓ Wi-Fi на борту (за доплату)</li>
+                                <li>✓ Розетки для зарядки</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Навигация -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('search_flights') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Назад к поиску
+                </a>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-home"></i> На главную
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

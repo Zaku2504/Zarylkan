@@ -1,0 +1,129 @@
+{% extends "manager/base.html" %}
+
+{% block title %}Управление рейсами - Панель менеджера{% endblock %}
+
+{% block manager_content %}
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-plane"></i> Мои рейсы</h2>
+                <a href="{{ url_for('manager_add_flight') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Добавить рейс
+                </a>
+            </div>
+            
+            {% if flights %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Всего рейсов: {{ flights|length }}</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Рейс</th>
+                                        <th>Маршрут</th>
+                                        <th>Время вылета</th>
+                                        <th>Места</th>
+                                        <th>Цены</th>
+                                        <th>Статус</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for flight in flights %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ flight.flight_number }}</strong>
+                                            <div class="small text-muted">{{ flight.airline.name }}</div>
+                                        </td>
+                                        <td>
+                                            <div>{{ flight.departure_airport.city }} → {{ flight.arrival_airport.city }}</div>
+                                            <small class="text-muted">{{ flight.departure_airport.code }} - {{ flight.arrival_airport.code }}</small>
+                                        </td>
+                                        <td>
+                                            <div>{{ flight.departure_time.strftime('%d.%m.%Y') }}</div>
+                                            <small class="text-muted">{{ flight.departure_time.strftime('%H:%M') }} - {{ flight.arrival_time.strftime('%H:%M') }}</small>
+                                        </td>
+                                        <td>
+                                            <div>Доступно: {{ flight.available_seats }}/{{ flight.total_seats }}</div>
+                                            <div class="progress" style="height: 5px;">
+                                                <div class="progress-bar" style="width: {{ (flight.available_seats / flight.total_seats * 100) if flight.total_seats > 0 else 0 }}%"></div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="small">
+                                                <div>Эконом: {{ "%.0f"|format(flight.economy_price) }} ₽</div>
+                                                {% if flight.business_price %}
+                                                <div>Бизнес: {{ "%.0f"|format(flight.business_price) }} ₽</div>
+                                                {% endif %}
+                                                {% if flight.first_class_price %}
+                                                <div>Первый: {{ "%.0f"|format(flight.first_class_price) }} ₽</div>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if flight.status == 'scheduled' else 'warning' if flight.status == 'delayed' else 'danger' }}">
+                                                {{ flight.status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ url_for('manager_edit_flight', flight_id=flight.id) }}" 
+                                                   class="btn btn-outline-primary" title="Редактировать">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button class="btn btn-outline-info" 
+                                                        onclick="viewPassengers({{ flight.id }})" 
+                                                        title="Пассажиры">
+                                                    <i class="fas fa-users"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger" 
+                                                        onclick="deleteFlight({{ flight.id }}, '{{ flight.flight_number }}')" 
+                                                        title="Удалить">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="card bg-light">
+                        <div class="card-body py-5">
+                            <i class="fas fa-plane fa-3x text-muted mb-4"></i>
+                            <h4 class="text-muted">Рейсы не найдены</h4>
+                            <p class="text-muted">Добавьте первый рейс для начала работы</p>
+                            <a href="{{ url_for('manager_add_flight') }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Добавить рейс
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function viewPassengers(flightId) {
+    // Переходим на страницу пассажиров с фильтром по рейсу
+    window.location.href = `/manager/passengers?flight=${flightId}`;
+}
+
+function deleteFlight(flightId, flightNumber) {
+    if (confirm(`Удалить рейс ${flightNumber}?\n\nЭто действие нельзя отменить.`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/manager/flight/delete/${flightId}`;
+        form.style.display = 'none';
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}
